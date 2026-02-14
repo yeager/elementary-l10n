@@ -1,6 +1,8 @@
 [Desktop Entry]
 Name=elementary OS Translation Status
+Name[sv]=elementary OS översättningsstatus
 Comment=View translation status for elementary OS
+Comment[sv]=Visa översättningsstatus för elementary OS
 Exec=elementary-l10n
 Icon=elementary-l10n
 Terminal=false
