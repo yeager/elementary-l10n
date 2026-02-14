@@ -177,7 +177,13 @@ class MainWindow(Adw.ApplicationWindow):
 
         # Load CSS
         self._setup_css()
-        self._load_data()
+
+        # Check for API key before making any requests
+        config = weblate.load_config()
+        if not config.get("api_key"):
+            GLib.idle_add(self._show_api_key_setup)
+        else:
+            self._load_data()
 
     def _setup_css(self):
         css = b"""
@@ -310,6 +316,58 @@ class MainWindow(Adw.ApplicationWindow):
         if self._data:
             self._render()
 
+    def _show_api_key_setup(self):
+        """Show first-run API key dialog. No requests are made until a key is provided."""
+        self._stack.set_visible_child_name("error")
+        self._error_label.set_markup(
+            f"<b>{_('Weblate API Key Required')}</b>\n\n"
+            f"{_('An API key is needed to fetch translation data.')}"
+        )
+
+        dialog = Adw.MessageDialog(
+            transient_for=self,
+            heading=_("Welcome! API Key Required"),
+            body=_(
+                "To fetch translation status from Weblate, you need an API key.\n\n"
+                "You can find your key at:\n"
+                "https://l10n.elementaryos.org/accounts/profile/#api\n\n"
+                "Log in (or create an account), then copy your API key below."
+            ),
+        )
+
+        box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=8, margin_top=12)
+        entry = Gtk.Entry(
+            placeholder_text=_("Paste your API key here"),
+            width_request=350,
+        )
+        link_btn = Gtk.LinkButton(
+            uri="https://l10n.elementaryos.org/accounts/profile/#api",
+            label=_("Open Weblate profile to get your API key"),
+        )
+        box.append(entry)
+        box.append(link_btn)
+        dialog.set_extra_child(box)
+
+        dialog.add_response("cancel", _("Cancel"))
+        dialog.add_response("save", _("Save & Continue"))
+        dialog.set_response_appearance("save", Adw.ResponseAppearance.SUGGESTED)
+        dialog.set_close_response("cancel")
+
+        def on_response(dlg, response):
+            if response == "save":
+                key = entry.get_text().strip()
+                if key:
+                    config = weblate.load_config()
+                    config["api_key"] = key
+                    weblate.save_config(config)
+                    self._load_data()
+                else:
+                    # No key entered, show setup again
+                    GLib.idle_add(self._show_api_key_setup)
+
+        dialog.connect("response", on_response)
+        dialog.present()
+
     def _on_settings_clicked(self, _btn):
         """Show settings dialog for API key."""
         dialog = Adw.MessageDialog(
@@ -322,17 +380,23 @@ class MainWindow(Adw.ApplicationWindow):
         )
 
         # Add entry for API key
+        box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=8, margin_top=12)
         entry = Gtk.Entry(
             placeholder_text=_("Weblate API key"),
             width_request=300,
-            margin_top=12,
         )
         config = weblate.load_config()
         current_key = config.get("api_key", "")
         if current_key:
             entry.set_text(current_key)
+        link_btn = Gtk.LinkButton(
+            uri="https://l10n.elementaryos.org/accounts/profile/#api",
+            label=_("Get your API key from Weblate"),
+        )
+        box.append(entry)
+        box.append(link_btn)
 
-        dialog.set_extra_child(entry)
+        dialog.set_extra_child(box)
         dialog.add_response("cancel", _("Cancel"))
         dialog.add_response("save", _("Save"))
         dialog.set_response_appearance("save", Adw.ResponseAppearance.SUGGESTED)
@@ -346,6 +410,8 @@ class MainWindow(Adw.ApplicationWindow):
                 else:
                     config.pop("api_key", None)
                 weblate.save_config(config)
+                # Reload with new key
+                self._load_data(force=True)
 
         dialog.connect("response", on_response)
         dialog.present()
