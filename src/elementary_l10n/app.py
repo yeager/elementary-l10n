@@ -86,6 +86,12 @@ class MainWindow(Adw.ApplicationWindow):
         # Header bar
         header = Adw.HeaderBar()
         
+        # About button
+        about_btn = Gtk.Button(icon_name="help-about-symbolic",
+                               tooltip_text="About")
+        about_btn.connect("clicked", self._on_about_clicked)
+        header.pack_end(about_btn)
+        
         # Language dropdown
         lang_model = Gtk.StringList()
         self._lang_codes = []
@@ -162,6 +168,10 @@ class MainWindow(Adw.ApplicationWindow):
         
         # Load CSS
         self._setup_css()
+        
+        # Check first run
+        self._check_first_run()
+        
         self._load_data()
     
     def _setup_css(self):
@@ -314,6 +324,70 @@ class MainWindow(Adw.ApplicationWindow):
     def _on_info_response(self, dialog, response):
         if response == "open":
             webbrowser.open("https://l10n.elementaryos.org/")
+
+    def _check_first_run(self):
+        """Show welcome dialog on first run."""
+        config = weblate.load_config()
+        # Show if first_run is True or if config is empty (never run before)
+        if config.get("first_run", True) is not True and "first_run" in config:
+            return
+
+        dialog = Adw.MessageDialog(
+            transient_for=self,
+            heading="Welcome to elementary OS Translation Status!",
+            body=(
+                "This app shows the translation progress for all "
+                "elementary OS components, fetching live data from the "
+                "Weblate translation platform.\n\n"
+                "It works without an API key, but Weblate enforces rate "
+                "limits on unauthenticated requests. For a smoother "
+                "experience, we recommend creating a free account at "
+                "l10n.elementaryos.org and adding your API key in the "
+                "app configuration.\n\n"
+                "Your API key is stored locally in:\n"
+                "~/.config/elementary-l10n/config.json"
+            ),
+        )
+
+        # "Don't show again" checkbox via extra_child
+        check = Gtk.CheckButton(label="Don't show this again")
+        check.set_active(True)
+        dialog.set_extra_child(check)
+
+        dialog.add_response("continue", "Continue")
+        dialog.add_response("get_key", "Get API Key")
+        dialog.set_response_appearance("get_key", Adw.ResponseAppearance.SUGGESTED)
+        dialog.set_default_response("continue")
+
+        def on_response(_dialog, response):
+            if check.get_active():
+                config["first_run"] = False
+                weblate.save_config(config)
+            if response == "get_key":
+                webbrowser.open("https://l10n.elementaryos.org/accounts/profile/#api")
+
+        dialog.connect("response", on_response)
+        dialog.present()
+
+    def _on_about_clicked(self, _btn):
+        """Show About dialog."""
+        about = Adw.AboutDialog(
+            application_name="elementary OS Translation Status",
+            application_icon="preferences-desktop-locale-symbolic",
+            version="0.1.0",
+            developer_name="Daniel Nylander",
+            developers=["Daniel Nylander <daniel@danielnylander.se>"],
+            website="https://github.com/yeager/elementary-l10n",
+            issue_url="https://github.com/yeager/elementary-l10n/issues",
+            license_type=Gtk.License.GPL_3_0,
+            comments=(
+                "Monitor translation progress for elementary OS components. "
+                "Track completion percentages, find untranslated strings, "
+                "and contribute to making elementary OS available in your language."
+            ),
+            translator_credits="translator-credits",
+        )
+        about.present(self)
 
 
 class App(Adw.Application):
