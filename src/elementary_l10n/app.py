@@ -156,15 +156,21 @@ class MainWindow(Adw.ApplicationWindow):
                                       valign=Gtk.Align.CENTER)
         self._stack.add_named(self._error_label, "error")
 
-        # Data view - scrolled list
+        # Data view - compact heatmap grid
         scroll = Gtk.ScrolledWindow(vexpand=True, hexpand=True)
-        self._list_box = Gtk.ListBox(selection_mode=Gtk.SelectionMode.NONE)
-        self._list_box.add_css_class("boxed-list")
 
-        clamp = Adw.Clamp(maximum_size=800, child=self._list_box,
-                          margin_top=24, margin_bottom=24,
-                          margin_start=12, margin_end=12)
-        scroll.set_child(clamp)
+        self._flow_box = Gtk.FlowBox(
+            selection_mode=Gtk.SelectionMode.NONE,
+            homogeneous=True,
+            min_children_per_line=2,
+            max_children_per_line=4,
+            column_spacing=8,
+            row_spacing=8,
+            margin_top=16, margin_bottom=16,
+            margin_start=16, margin_end=16,
+        )
+
+        scroll.set_child(self._flow_box)
         self._stack.add_named(scroll, "data")
 
         # Summary bar
@@ -193,9 +199,17 @@ class MainWindow(Adw.ApplicationWindow):
 
     def _setup_css(self):
         css = b"""
-        .pct-bar {
-            border-radius: 6px;
-            min-height: 8px;
+        .card {
+            border-radius: 12px;
+            padding: 0;
+            overflow: hidden;
+        }
+        .card:hover {
+            opacity: 0.85;
+        }
+        .title-1 {
+            font-size: 1.4em;
+            font-weight: bold;
         }
         """
         provider = Gtk.CssProvider()
@@ -240,10 +254,10 @@ class MainWindow(Adw.ApplicationWindow):
     def _render(self):
         # Clear
         while True:
-            child = self._list_box.get_first_child()
+            child = self._flow_box.get_first_child()
             if child is None:
                 break
-            self._list_box.remove(child)
+            self._flow_box.remove(child)
 
         data = sorted(self._data, key=lambda r: r["translated_percent"],
                        reverse=not self._sort_ascending)
@@ -265,51 +279,98 @@ class MainWindow(Adw.ApplicationWindow):
         self._summary.set_text(summary)
 
         for row in data:
-            self._list_box.append(self._make_row(row))
+            self._flow_box.append(self._make_tile(row))
 
         self._stack.set_visible_child_name("data")
 
-    def _make_row(self, item):
-        row = Adw.ActionRow(
-            title=GLib.markup_escape_text(item["component"]),
-            subtitle=GLib.markup_escape_text(item["project"]),
-            activatable=True,
-        )
-        row.set_tooltip_text(_("Open {component} on Weblate").format(
-            component=item['component']))
-        row.connect("activated", lambda _, url=item["translate_url"]: webbrowser.open(url))
-        row.add_suffix(Gtk.Image(icon_name="go-next-symbolic"))
-
-        # Percentage + color bar
+    def _make_tile(self, item):
+        """Create a compact heatmap tile for a component."""
         pct = item["translated_percent"]
         color = pct_to_color(pct)
 
-        pct_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=2,
-                          valign=Gtk.Align.CENTER, width_request=80)
+        # Outer box as a clickable button-like tile
+        tile = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=4,
+                       width_request=200, height_request=80)
+        tile.add_css_class("card")
+        tile.set_margin_top(2)
+        tile.set_margin_bottom(2)
 
-        pct_label = Gtk.Label(label=f"{pct:.0f}%", halign=Gtk.Align.END)
+        # Heatmap background
+        bg = Gtk.DrawingArea(vexpand=True, hexpand=True)
+
+        def draw_bg(area, cr, w, h, p=pct, c=color):
+            # Background with heatmap color at low opacity
+            cr.set_source_rgba(c.red, c.green, c.blue, 0.15)
+            cr.rectangle(0, 0, w, h)
+            cr.fill()
+            # Progress bar at bottom
+            cr.set_source_rgba(c.red, c.green, c.blue, 0.7)
+            cr.rectangle(0, h - 4, w * (p / 100), 4)
+            cr.fill()
+            # Track
+            cr.set_source_rgba(0.5, 0.5, 0.5, 0.15)
+            cr.rectangle(w * (p / 100), h - 4, w - w * (p / 100), 4)
+            cr.fill()
+
+        bg.set_draw_func(draw_bg)
+
+        # Overlay text on the drawing area
+        overlay = Gtk.Overlay()
+        overlay.set_child(bg)
+
+        text_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=2,
+                           margin_top=8, margin_bottom=8,
+                           margin_start=10, margin_end=10,
+                           valign=Gtk.Align.CENTER)
+
+        comp_label = Gtk.Label(
+            label=item["component"],
+            halign=Gtk.Align.START,
+            ellipsize=Pango.EllipsizeMode.END,
+            max_width_chars=25,
+        )
+        comp_label.add_css_class("heading")
+
+        proj_label = Gtk.Label(
+            label=item["project"],
+            halign=Gtk.Align.START,
+            ellipsize=Pango.EllipsizeMode.END,
+            max_width_chars=25,
+        )
+        proj_label.add_css_class("dim-label")
+        proj_label.add_css_class("caption")
+
+        pct_label = Gtk.Label(
+            label=f"{pct:.0f}%",
+            halign=Gtk.Align.END,
+            hexpand=True,
+        )
         pct_label.add_css_class("numeric")
+        pct_label.add_css_class("title-1")
         if pct >= 100:
             pct_label.add_css_class("success")
 
-        bar = Gtk.DrawingArea(width_request=80, height_request=8)
-        bar.add_css_class("pct-bar")
+        top_row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=4)
+        labels_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=1)
+        labels_box.append(comp_label)
+        labels_box.append(proj_label)
+        top_row.append(labels_box)
+        top_row.append(pct_label)
 
-        def draw_bar(area, cr, w, h, p=pct, c=color):
-            cr.set_source_rgba(0.3, 0.3, 0.3, 0.3)
-            cr.rectangle(0, 0, w, h)
-            cr.fill()
-            cr.set_source_rgba(c.red, c.green, c.blue, c.alpha)
-            cr.rectangle(0, 0, w * (p / 100), h)
-            cr.fill()
+        text_box.append(top_row)
+        overlay.add_overlay(text_box)
 
-        bar.set_draw_func(draw_bar)
+        tile.append(overlay)
 
-        pct_box.append(pct_label)
-        pct_box.append(bar)
-        row.add_suffix(pct_box)
+        # Make clickable
+        gesture = Gtk.GestureClick()
+        gesture.connect("released", lambda g, n, x, y, url=item["translate_url"]: webbrowser.open(url))
+        tile.add_controller(gesture)
+        tile.set_cursor(Gdk.Cursor.new_from_name("pointer"))
+        tile.set_tooltip_text(_("Open {component} on Weblate").format(
+            component=item["component"]))
 
-        return row
+        return tile
 
     def _on_lang_changed(self, dropdown, _pspec):
         idx = dropdown.get_selected()
