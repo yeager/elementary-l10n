@@ -121,3 +121,11 @@ msgstr ""
 #: src/elementary_l10n/app.py:371
 msgid "Open Weblate"
 msgstr ""
+
+#: desktop file
+msgid "View translation status for elementary OS"
+msgstr ""
+
+#: desktop file
+msgid "translation;l10n;elementary;weblate;"
+msgstr ""

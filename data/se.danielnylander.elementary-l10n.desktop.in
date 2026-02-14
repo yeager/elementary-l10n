@@ -1,0 +1,9 @@
+[Desktop Entry]
+_Name=elementary OS Translation Status
+_Comment=View translation status for elementary OS
+Exec=elementary-l10n
+Icon=elementary-l10n
+Terminal=false
+Type=Application
+Categories=Development;Translation;
+_Keywords=translation;l10n;elementary;weblate;
