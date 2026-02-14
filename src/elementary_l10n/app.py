@@ -122,6 +122,12 @@ class MainWindow(Adw.ApplicationWindow):
         settings_btn.connect("clicked", self._on_settings_clicked)
         header.pack_end(settings_btn)
 
+        # About button
+        about_btn = Gtk.Button(icon_name="help-about-symbolic",
+                               tooltip_text=_("About"))
+        about_btn.connect("clicked", self._on_about_clicked)
+        header.pack_end(about_btn)
+
         # Info button
         info_btn = Gtk.Button(icon_name="dialog-information-symbolic",
                               tooltip_text=_("How to help translate"))
@@ -415,6 +421,23 @@ class MainWindow(Adw.ApplicationWindow):
 
         dialog.connect("response", on_response)
         dialog.present()
+
+    def _on_about_clicked(self, _btn):
+        about = Adw.AboutWindow(
+            transient_for=self,
+            application_name=_("elementary OS Translation Status"),
+            application_icon="elementary-l10n",
+            version="0.1.0",
+            developer_name="Daniel Nylander",
+            developers=["Daniel Nylander <daniel@danielnylander.se>"],
+            copyright="© 2025 Daniel Nylander",
+            license_type=Gtk.License.GPL_3_0,
+            website="https://github.com/yeager/elementary-l10n",
+            issue_url="https://github.com/yeager/elementary-l10n/issues",
+            comments=_("A localization tool by Daniel Nylander"),
+            translator_credits=_("Translate this app: https://app.transifex.com/linguaedit/elementary-l10n/"),
+        )
+        about.present()
 
     def _on_info_clicked(self, _btn):
         dialog = Adw.MessageDialog(
