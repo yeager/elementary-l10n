@@ -1,6 +1,8 @@
 """elementary OS Translation Status - GTK4/Adwaita app."""
 
+import gettext
 import locale
+import os
 import sys
 import webbrowser
 
@@ -10,6 +12,14 @@ gi.require_version("Adw", "1")
 from gi.repository import Gtk, Adw, Gio, GLib, Gdk, Pango  # noqa: E402
 
 from . import weblate  # noqa: E402
+
+# i18n setup
+LOCALEDIR = os.path.join(os.path.dirname(__file__), '..', '..', '..', 'po', 'locale')
+if not os.path.isdir(LOCALEDIR):
+    LOCALEDIR = '/usr/share/locale'
+gettext.bindtextdomain('elementary-l10n', LOCALEDIR)
+gettext.textdomain('elementary-l10n')
+_ = gettext.gettext
 
 # Common languages on Weblate
 LANGUAGES = [
@@ -75,7 +85,7 @@ def pct_to_color(pct: float) -> Gdk.RGBA:
 
 class MainWindow(Adw.ApplicationWindow):
     def __init__(self, app):
-        super().__init__(application=app, title="elementary OS Translation Status",
+        super().__init__(application=app, title=_("elementary OS Translation Status"),
                          default_width=900, default_height=700)
 
         self._data = []
@@ -96,31 +106,31 @@ class MainWindow(Adw.ApplicationWindow):
                 selected_idx = i
 
         self._lang_dropdown = Gtk.DropDown(model=lang_model, selected=selected_idx)
-        self._lang_dropdown.set_tooltip_text("Select language")
+        self._lang_dropdown.set_tooltip_text(_("Select language"))
         self._lang_dropdown.connect("notify::selected", self._on_lang_changed)
         header.pack_start(self._lang_dropdown)
 
         # Sort button
         sort_btn = Gtk.Button(icon_name="view-sort-descending-symbolic",
-                              tooltip_text="Toggle sort order")
+                              tooltip_text=_("Toggle sort order"))
         sort_btn.connect("clicked", self._on_sort_clicked)
         header.pack_start(sort_btn)
 
         # Settings button
         settings_btn = Gtk.Button(icon_name="emblem-system-symbolic",
-                                  tooltip_text="Settings")
+                                  tooltip_text=_("Settings"))
         settings_btn.connect("clicked", self._on_settings_clicked)
         header.pack_end(settings_btn)
 
         # Info button
         info_btn = Gtk.Button(icon_name="dialog-information-symbolic",
-                              tooltip_text="How to help translate")
+                              tooltip_text=_("How to help translate"))
         info_btn.connect("clicked", self._on_info_clicked)
         header.pack_end(info_btn)
 
         # Refresh button
         refresh_btn = Gtk.Button(icon_name="view-refresh-symbolic",
-                                 tooltip_text="Refresh data")
+                                 tooltip_text=_("Refresh data"))
         refresh_btn.connect("clicked", lambda _: self._load_data(force=True))
         header.pack_end(refresh_btn)
 
@@ -132,7 +142,7 @@ class MainWindow(Adw.ApplicationWindow):
                               valign=Gtk.Align.CENTER, halign=Gtk.Align.CENTER)
         spinner = Gtk.Spinner(spinning=True, width_request=48, height_request=48)
         loading_box.append(spinner)
-        loading_box.append(Gtk.Label(label="Loading translation data…"))
+        loading_box.append(Gtk.Label(label=_("Loading translation data…")))
         self._stack.add_named(loading_box, "loading")
 
         # Error view
@@ -203,9 +213,9 @@ class MainWindow(Adw.ApplicationWindow):
 
     def _show_error(self, msg):
         self._error_label.set_markup(
-            f"<b>Failed to load data</b>\n\n{GLib.markup_escape_text(msg)}\n\n"
-            f"The Weblate instance might be temporarily unavailable.\n"
-            f"Click refresh to try again."
+            f"<b>{_('Failed to load data')}</b>\n\n{GLib.markup_escape_text(msg)}\n\n"
+            f"{_('The Weblate instance might be temporarily unavailable.')}\n"
+            f"{_('Click refresh to try again.')}"
         )
         self._stack.set_visible_child_name("error")
 
@@ -227,17 +237,19 @@ class MainWindow(Adw.ApplicationWindow):
                        reverse=not self._sort_ascending)
 
         if not data:
-            self._show_error("No components found.")
+            self._show_error(_("No components found."))
             return
 
         avg = sum(r["translated_percent"] for r in data) / len(data)
         complete = sum(1 for r in data if r["translated_percent"] >= 100)
         summary = (
-            f"{len(data)} components · {complete} fully translated · "
-            f"Average: {avg:.1f}%"
+            _("{count} components · {complete} fully translated · "
+              "Average: {avg}%").format(
+                count=len(data), complete=complete, avg=f"{avg:.1f}")
         )
         if getattr(self, '_from_cache', False):
-            summary += f" · Cached data ({self._cache_age} min ago)"
+            summary += " · " + _("Cached data ({age} min ago)").format(
+                age=self._cache_age)
         self._summary.set_text(summary)
 
         for row in data:
@@ -251,7 +263,8 @@ class MainWindow(Adw.ApplicationWindow):
             subtitle=GLib.markup_escape_text(item["project"]),
             activatable=True,
         )
-        row.set_tooltip_text(f"Open {item['component']} on Weblate")
+        row.set_tooltip_text(_("Open {component} on Weblate").format(
+            component=item['component']))
         row.connect("activated", lambda _, url=item["translate_url"]: webbrowser.open(url))
         row.add_suffix(Gtk.Image(icon_name="go-next-symbolic"))
 
@@ -301,8 +314,8 @@ class MainWindow(Adw.ApplicationWindow):
         """Show settings dialog for API key."""
         dialog = Adw.MessageDialog(
             transient_for=self,
-            heading="Settings",
-            body=(
+            heading=_("Settings"),
+            body=_(
                 "Enter your Weblate API key to avoid rate limiting.\n"
                 "Find it at: l10n.elementaryos.org → Your profile → API access"
             ),
@@ -310,7 +323,7 @@ class MainWindow(Adw.ApplicationWindow):
 
         # Add entry for API key
         entry = Gtk.Entry(
-            placeholder_text="Weblate API key",
+            placeholder_text=_("Weblate API key"),
             width_request=300,
             margin_top=12,
         )
@@ -320,8 +333,8 @@ class MainWindow(Adw.ApplicationWindow):
             entry.set_text(current_key)
 
         dialog.set_extra_child(entry)
-        dialog.add_response("cancel", "Cancel")
-        dialog.add_response("save", "Save")
+        dialog.add_response("cancel", _("Cancel"))
+        dialog.add_response("save", _("Save"))
         dialog.set_response_appearance("save", Adw.ResponseAppearance.SUGGESTED)
 
         def on_response(dlg, response):
@@ -340,8 +353,8 @@ class MainWindow(Adw.ApplicationWindow):
     def _on_info_clicked(self, _btn):
         dialog = Adw.MessageDialog(
             transient_for=self,
-            heading="Help Translate elementary OS!",
-            body=(
+            heading=_("Help Translate elementary OS!"),
+            body=_(
                 "elementary OS is translated by volunteers like you using "
                 "Weblate — a web-based translation tool.\n\n"
                 "Getting started is easy:\n\n"
@@ -354,8 +367,8 @@ class MainWindow(Adw.ApplicationWindow):
                 "Even translating a few strings makes a difference."
             ),
         )
-        dialog.add_response("close", "Close")
-        dialog.add_response("open", "Open Weblate")
+        dialog.add_response("close", _("Close"))
+        dialog.add_response("open", _("Open Weblate"))
         dialog.set_response_appearance("open", Adw.ResponseAppearance.SUGGESTED)
         dialog.connect("response", self._on_info_response)
         dialog.present()
