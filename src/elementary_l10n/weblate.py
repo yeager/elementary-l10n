@@ -59,6 +59,12 @@ def _request_with_retry(session: requests.Session, url: str, max_retries: int = 
     """Make a GET request with exponential backoff on 429."""
     for attempt in range(max_retries):
         r = session.get(url, timeout=30)
+        if r.status_code == 401:
+            raise RuntimeError(
+                "Authentication failed (401). Your API key may be invalid or expired.\n"
+                "Go to Settings and enter a valid API key from:\n"
+                "https://l10n.elementaryos.org/accounts/profile/#api"
+            )
         if r.status_code == 429:
             wait = 2 ** (attempt + 1)  # 2, 4, 8, 16
             time.sleep(wait)
@@ -67,6 +73,12 @@ def _request_with_retry(session: requests.Session, url: str, max_retries: int = 
         return r
     # Final attempt
     r = session.get(url, timeout=30)
+    if r.status_code == 401:
+        raise RuntimeError(
+            "Authentication failed (401). Your API key may be invalid or expired.\n"
+            "Go to Settings and enter a valid API key from:\n"
+            "https://l10n.elementaryos.org/accounts/profile/#api"
+        )
     r.raise_for_status()
     return r
 
