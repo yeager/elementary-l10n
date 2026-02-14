@@ -1,4 +1,4 @@
-"""elementary OS Translation Status - GTK4/Adwaita app."""
+"""Translation Status - GTK4/Adwaita Weblate translation viewer."""
 
 import gettext
 import locale
@@ -85,7 +85,7 @@ def pct_to_color(pct: float) -> Gdk.RGBA:
 
 class MainWindow(Adw.ApplicationWindow):
     def __init__(self, app):
-        super().__init__(application=app, title=_("elementary OS Translation Status"),
+        super().__init__(application=app, title=_("Translation Status"),
                          default_width=900, default_height=700)
 
         self._data = []
@@ -425,16 +425,16 @@ class MainWindow(Adw.ApplicationWindow):
     def _on_about_clicked(self, _btn):
         about = Adw.AboutWindow(
             transient_for=self,
-            application_name=_("elementary OS Translation Status"),
-            application_icon="elementary-l10n",
-            version="0.1.0",
+            application_name=_("Translation Status"),
+            application_icon="se.danielnylander.TranslationStatus",
+            version="0.2.1",
             developer_name="Daniel Nylander",
             developers=["Daniel Nylander <daniel@danielnylander.se>"],
             copyright="© 2025 Daniel Nylander",
             license_type=Gtk.License.GPL_3_0,
             website="https://github.com/yeager/elementary-l10n",
             issue_url="https://github.com/yeager/elementary-l10n/issues",
-            comments=_("A localization tool by Daniel Nylander"),
+            comments=_("View translation progress for Weblate-hosted projects"),
             translator_credits=_("Translate this app: https://app.transifex.com/linguaedit/elementary-l10n/"),
         )
         about.present()
@@ -442,16 +442,16 @@ class MainWindow(Adw.ApplicationWindow):
     def _on_info_clicked(self, _btn):
         dialog = Adw.MessageDialog(
             transient_for=self,
-            heading=_("Help Translate elementary OS!"),
+            heading=_("Help Translate!"),
             body=_(
-                "elementary OS is translated by volunteers like you using "
+                "Translations are contributed by volunteers using "
                 "Weblate — a web-based translation tool.\n\n"
                 "Getting started is easy:\n\n"
                 "1. Visit l10n.elementaryos.org\n"
                 "2. Create a free account (or log in with GitHub)\n"
                 "3. Pick a component and your language\n"
                 "4. Start translating — no coding skills needed!\n\n"
-                "Every translated string helps make elementary OS "
+                "Every translated string helps make software "
                 "accessible to more people around the world. "
                 "Even translating a few strings makes a difference."
             ),
@@ -469,7 +469,7 @@ class MainWindow(Adw.ApplicationWindow):
 
 class App(Adw.Application):
     def __init__(self):
-        super().__init__(application_id="io.github.yeager.elementary-l10n",
+        super().__init__(application_id="se.danielnylander.TranslationStatus",
                          flags=Gio.ApplicationFlags.FLAGS_NONE)
 
     def do_activate(self):

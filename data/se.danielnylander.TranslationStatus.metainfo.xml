@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>se.danielnylander.TranslationStatus</id>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>GPL-3.0-or-later</project_license>
+
+  <name>Translation Status</name>
+  <name xml:lang="sv">Översättningsstatus</name>
+  <summary>View translation progress for Weblate-hosted projects</summary>
+  <summary xml:lang="sv">Visa översättningsförlopp för Weblate-projekt</summary>
+
+  <description>
+    <p>Translation Status lets you monitor localization progress across all components hosted on a Weblate instance. It shows color-coded completion bars, lets you switch between languages, and links directly to Weblate for contributing translations.</p>
+    <p xml:lang="sv">Översättningsstatus låter dig följa lokaliseringsförlopp för alla komponenter på en Weblate-instans. Appen visar färgkodade förloppsbalkar, låter dig byta språk och länkar direkt till Weblate för att bidra med översättningar.</p>
+  </description>
+
+  <developer id="se.danielnylander">
+    <name>Daniel Nylander</name>
+  </developer>
+
+  <url type="homepage">https://github.com/yeager/elementary-l10n</url>
+  <url type="bugtracker">https://github.com/yeager/elementary-l10n/issues</url>
+
+  <launchable type="desktop-id">se.danielnylander.TranslationStatus.desktop</launchable>
+
+  <screenshots>
+    <screenshot type="default">
+      <caption>Main view showing translation progress per component</caption>
+      <image>https://raw.githubusercontent.com/yeager/elementary-l10n/main/data/screenshots/screenshot-01.png</image>
+    </screenshot>
+  </screenshots>
+
+  <content_rating type="oars-1.1" />
+
+  <categories>
+    <category>Development</category>
+    <category>Translation</category>
+  </categories>
+
+  <releases>
+    <release version="0.2.1" date="2025-01-01">
+      <description>
+        <p>Initial AppCenter release.</p>
+      </description>
+    </release>
+  </releases>
+
+  <recommends>
+    <display_length compare="ge">360</display_length>
+  </recommends>
+  <supports>
+    <control>pointing</control>
+    <control>keyboard</control>
+  </supports>
+</component>

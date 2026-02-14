@@ -1,0 +1,26 @@
+app-id: se.danielnylander.TranslationStatus
+runtime: io.elementary.Platform
+runtime-version: '8'
+sdk: io.elementary.Sdk
+command: elementary-l10n
+finish-args:
+  - --share=ipc
+  - --share=network
+  - --socket=fallback-x11
+  - --socket=wayland
+
+modules:
+  - name: elementary-l10n
+    buildsystem: simple
+    build-commands:
+      - pip3 install --no-deps --prefix=/app .
+      - install -Dm644 data/se.danielnylander.TranslationStatus.desktop /app/share/applications/se.danielnylander.TranslationStatus.desktop
+      - install -Dm644 data/se.danielnylander.TranslationStatus.metainfo.xml /app/share/metainfo/se.danielnylander.TranslationStatus.metainfo.xml
+      - install -Dm644 data/icons/elementary-l10n.svg /app/share/icons/hicolor/scalable/apps/se.danielnylander.TranslationStatus.svg
+      - |
+        for size in 32 48 64 128; do
+          install -Dm644 data/icons/${size}x${size}/se.danielnylander.TranslationStatus.png /app/share/icons/hicolor/${size}x${size}/apps/se.danielnylander.TranslationStatus.png
+        done
+    sources:
+      - type: dir
+        path: .
