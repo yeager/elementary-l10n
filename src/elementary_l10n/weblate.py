@@ -55,10 +55,10 @@ def save_cache(language_code: str, data: list):
     }, indent=2))
 
 
-def _request_with_retry(session: requests.Session, url: str, max_retries: int = 4) -> requests.Response:
+def _request_with_retry(session: requests.Session, url: str, max_retries: int = 3) -> requests.Response:
     """Make a GET request with exponential backoff on 429."""
-    for attempt in range(max_retries):
-        r = session.get(url, timeout=30)
+    for attempt in range(max_retries + 1):
+        r = session.get(url, timeout=15)
         if r.status_code == 401:
             raise RuntimeError(
                 "Authentication failed (401). Your API key may be invalid or expired.\n"
@@ -66,19 +66,24 @@ def _request_with_retry(session: requests.Session, url: str, max_retries: int = 
                 "https://l10n.elementaryos.org/accounts/profile/#api"
             )
         if r.status_code == 429:
-            wait = 2 ** (attempt + 1)  # 2, 4, 8, 16
+            if attempt >= max_retries:
+                # Parse retry-after if available
+                retry_after = r.headers.get("Retry-After", "")
+                try:
+                    wait_info = json.loads(r.text)
+                    detail = wait_info.get("errors", [{}])[0].get("detail", "")
+                except Exception:
+                    detail = ""
+                raise RuntimeError(
+                    f"Rate limited by Weblate (429). {detail}\n"
+                    f"The server is throttling requests. Try again later."
+                )
+            wait = 2 ** (attempt + 1)
             time.sleep(wait)
             continue
         r.raise_for_status()
         return r
-    # Final attempt
-    r = session.get(url, timeout=30)
-    if r.status_code == 401:
-        raise RuntimeError(
-            "Authentication failed (401). Your API key may be invalid or expired.\n"
-            "Go to Settings and enter a valid API key from:\n"
-            "https://l10n.elementaryos.org/accounts/profile/#api"
-        )
+    # Should not reach here, but just in case
     r.raise_for_status()
     return r
 
@@ -158,6 +163,29 @@ def fetch_all_data(language_code: str, callback: Callable, error_cb: Callable,
             config = load_config()
             api_key = config.get("api_key")
             session = _make_session(api_key)
+
+            # Quick connectivity check first
+            try:
+                r = session.get(f"{API}/projects/", timeout=10)
+                if r.status_code == 429:
+                    try:
+                        detail = r.json().get("errors", [{}])[0].get("detail", "")
+                    except Exception:
+                        detail = ""
+                    raise RuntimeError(
+                        f"Weblate is rate limiting requests. {detail}\n"
+                        "Try again later or check your API key in Settings."
+                    )
+                if r.status_code == 401:
+                    raise RuntimeError(
+                        "API key is invalid or expired (401).\n"
+                        "Update your key in Settings:\n"
+                        "https://l10n.elementaryos.org/accounts/profile/#api"
+                    )
+            except requests.ConnectionError:
+                raise RuntimeError("Could not connect to l10n.elementaryos.org. Check your network.")
+            except requests.Timeout:
+                raise RuntimeError("Connection to Weblate timed out. Try again later.")
 
             projects = fetch_projects(session)
             rows = []
