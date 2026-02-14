@@ -435,7 +435,7 @@ class MainWindow(Adw.ApplicationWindow):
             website="https://github.com/yeager/elementary-l10n",
             issue_url="https://github.com/yeager/elementary-l10n/issues",
             comments=_("View translation progress for Weblate-hosted projects"),
-            translator_credits=_("Translate this app: https://app.transifex.com/linguaedit/elementary-l10n/"),
+            translator_credits=_("Translate this app: https://app.transifex.com/danielnylander/elementary-l10n/"),
         )
         about.present()
 
