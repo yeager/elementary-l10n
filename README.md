@@ -65,3 +65,7 @@ GPL-3.0-or-later — see [COPYING](COPYING) for details.
 ## Author
 
 Daniel Nylander <daniel@danielnylander.se>
+
+## Translation
+
+Translations are managed via [Transifex](https://app.transifex.com/danielnylander/elementary-l10n/). See [po/README.md](po/README.md) for details.
