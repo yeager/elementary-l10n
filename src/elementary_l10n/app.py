@@ -48,9 +48,8 @@ LANGUAGES = [
 def get_system_language() -> str:
     """Detect system language code."""
     try:
-        loc = locale.getdefaultlocale()[0]  # e.g. 'sv_SE'
+        loc = locale.getlocale()[0]  # e.g. 'sv_SE'
         if loc:
-            # Try full locale first (e.g. pt_BR), then just language
             for code, _ in LANGUAGES:
                 if code == loc:
                     return code
@@ -78,20 +77,14 @@ class MainWindow(Adw.ApplicationWindow):
     def __init__(self, app):
         super().__init__(application=app, title="elementary OS Translation Status",
                          default_width=900, default_height=700)
-        
+
         self._data = []
         self._sort_ascending = True
         self._current_lang = get_system_language()
-        
+
         # Header bar
         header = Adw.HeaderBar()
-        
-        # About button
-        about_btn = Gtk.Button(icon_name="help-about-symbolic",
-                               tooltip_text="About")
-        about_btn.connect("clicked", self._on_about_clicked)
-        header.pack_end(about_btn)
-        
+
         # Language dropdown
         lang_model = Gtk.StringList()
         self._lang_codes = []
@@ -101,33 +94,39 @@ class MainWindow(Adw.ApplicationWindow):
             self._lang_codes.append(code)
             if code == self._current_lang:
                 selected_idx = i
-        
+
         self._lang_dropdown = Gtk.DropDown(model=lang_model, selected=selected_idx)
         self._lang_dropdown.set_tooltip_text("Select language")
         self._lang_dropdown.connect("notify::selected", self._on_lang_changed)
         header.pack_start(self._lang_dropdown)
-        
+
         # Sort button
         sort_btn = Gtk.Button(icon_name="view-sort-descending-symbolic",
                               tooltip_text="Toggle sort order")
         sort_btn.connect("clicked", self._on_sort_clicked)
         header.pack_start(sort_btn)
-        
+
+        # Settings button
+        settings_btn = Gtk.Button(icon_name="emblem-system-symbolic",
+                                  tooltip_text="Settings")
+        settings_btn.connect("clicked", self._on_settings_clicked)
+        header.pack_end(settings_btn)
+
         # Info button
         info_btn = Gtk.Button(icon_name="dialog-information-symbolic",
                               tooltip_text="How to help translate")
         info_btn.connect("clicked", self._on_info_clicked)
         header.pack_end(info_btn)
-        
+
         # Refresh button
         refresh_btn = Gtk.Button(icon_name="view-refresh-symbolic",
                                  tooltip_text="Refresh data")
-        refresh_btn.connect("clicked", lambda _: self._load_data())
+        refresh_btn.connect("clicked", lambda _: self._load_data(force=True))
         header.pack_end(refresh_btn)
-        
+
         # Content
         self._stack = Gtk.Stack(transition_type=Gtk.StackTransitionType.CROSSFADE)
-        
+
         # Loading view
         loading_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=12,
                               valign=Gtk.Align.CENTER, halign=Gtk.Align.CENTER)
@@ -135,45 +134,41 @@ class MainWindow(Adw.ApplicationWindow):
         loading_box.append(spinner)
         loading_box.append(Gtk.Label(label="Loading translation data…"))
         self._stack.add_named(loading_box, "loading")
-        
+
         # Error view
         self._error_label = Gtk.Label(wrap=True, halign=Gtk.Align.CENTER,
                                       valign=Gtk.Align.CENTER)
         self._stack.add_named(self._error_label, "error")
-        
+
         # Data view - scrolled list
         scroll = Gtk.ScrolledWindow(vexpand=True, hexpand=True)
         self._list_box = Gtk.ListBox(selection_mode=Gtk.SelectionMode.NONE)
         self._list_box.add_css_class("boxed-list")
-        
+
         clamp = Adw.Clamp(maximum_size=800, child=self._list_box,
                           margin_top=24, margin_bottom=24,
                           margin_start=12, margin_end=12)
         scroll.set_child(clamp)
         self._stack.add_named(scroll, "data")
-        
+
         # Summary bar
         self._summary = Gtk.Label(halign=Gtk.Align.CENTER,
                                   margin_top=6, margin_bottom=6)
         self._summary.add_css_class("dim-label")
-        
+
         content_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
         content_box.append(self._stack)
         content_box.append(self._summary)
-        
+
         toolbar_view = Adw.ToolbarView()
         toolbar_view.add_top_bar(header)
         toolbar_view.set_content(content_box)
         self.set_content(toolbar_view)
-        
+
         # Load CSS
         self._setup_css()
-        
-        # Check first run
-        self._check_first_run()
-        
         self._load_data()
-    
+
     def _setup_css(self):
         css = b"""
         .pct-bar {
@@ -187,19 +182,25 @@ class MainWindow(Adw.ApplicationWindow):
             Gdk.Display.get_default(), provider,
             Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
         )
-    
-    def _load_data(self):
+
+    def _load_data(self, force=False):
         self._stack.set_visible_child_name("loading")
         self._summary.set_text("")
-        
+
         def on_data(rows):
-            GLib.idle_add(self._populate, rows)
-        
+            GLib.idle_add(self._populate, rows, False)
+
         def on_error(e):
             GLib.idle_add(self._show_error, str(e))
-        
-        weblate.fetch_all_data(self._current_lang, on_data, on_error)
-    
+
+        def on_cache(rows, age_minutes):
+            GLib.idle_add(self._populate, rows, True, age_minutes)
+
+        weblate.fetch_all_data(
+            self._current_lang, on_data, on_error,
+            cache_cb=None if force else on_cache,
+        )
+
     def _show_error(self, msg):
         self._error_label.set_markup(
             f"<b>Failed to load data</b>\n\n{GLib.markup_escape_text(msg)}\n\n"
@@ -207,11 +208,13 @@ class MainWindow(Adw.ApplicationWindow):
             f"Click refresh to try again."
         )
         self._stack.set_visible_child_name("error")
-    
-    def _populate(self, rows):
+
+    def _populate(self, rows, from_cache=False, age_minutes=0):
         self._data = rows
+        self._from_cache = from_cache
+        self._cache_age = age_minutes
         self._render()
-    
+
     def _render(self):
         # Clear
         while True:
@@ -219,26 +222,29 @@ class MainWindow(Adw.ApplicationWindow):
             if child is None:
                 break
             self._list_box.remove(child)
-        
+
         data = sorted(self._data, key=lambda r: r["translated_percent"],
                        reverse=not self._sort_ascending)
-        
+
         if not data:
             self._show_error("No components found.")
             return
-        
+
         avg = sum(r["translated_percent"] for r in data) / len(data)
         complete = sum(1 for r in data if r["translated_percent"] >= 100)
-        self._summary.set_text(
+        summary = (
             f"{len(data)} components · {complete} fully translated · "
             f"Average: {avg:.1f}%"
         )
-        
+        if getattr(self, '_from_cache', False):
+            summary += f" · Cached data ({self._cache_age} min ago)"
+        self._summary.set_text(summary)
+
         for row in data:
             self._list_box.append(self._make_row(row))
-        
+
         self._stack.set_visible_child_name("data")
-    
+
     def _make_row(self, item):
         row = Adw.ActionRow(
             title=GLib.markup_escape_text(item["component"]),
@@ -248,56 +254,89 @@ class MainWindow(Adw.ApplicationWindow):
         row.set_tooltip_text(f"Open {item['component']} on Weblate")
         row.connect("activated", lambda _, url=item["translate_url"]: webbrowser.open(url))
         row.add_suffix(Gtk.Image(icon_name="go-next-symbolic"))
-        
+
         # Percentage + color bar
         pct = item["translated_percent"]
         color = pct_to_color(pct)
-        
+
         pct_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=2,
                           valign=Gtk.Align.CENTER, width_request=80)
-        
+
         pct_label = Gtk.Label(label=f"{pct:.0f}%", halign=Gtk.Align.END)
         pct_label.add_css_class("numeric")
         if pct >= 100:
             pct_label.add_css_class("success")
-        
-        bar_bg = Gtk.Box(width_request=80, height_request=8)
-        bar_bg.add_css_class("pct-bar")
-        bar_bg.override_background_color_warning = False
-        
-        # Use a drawing area for the bar
+
         bar = Gtk.DrawingArea(width_request=80, height_request=8)
         bar.add_css_class("pct-bar")
-        
+
         def draw_bar(area, cr, w, h, p=pct, c=color):
-            # Background
             cr.set_source_rgba(0.3, 0.3, 0.3, 0.3)
             cr.rectangle(0, 0, w, h)
             cr.fill()
-            # Fill
             cr.set_source_rgba(c.red, c.green, c.blue, c.alpha)
             cr.rectangle(0, 0, w * (p / 100), h)
             cr.fill()
-        
+
         bar.set_draw_func(draw_bar)
-        
+
         pct_box.append(pct_label)
         pct_box.append(bar)
         row.add_suffix(pct_box)
-        
+
         return row
-    
+
     def _on_lang_changed(self, dropdown, _pspec):
         idx = dropdown.get_selected()
         if idx < len(self._lang_codes):
             self._current_lang = self._lang_codes[idx]
             self._load_data()
-    
+
     def _on_sort_clicked(self, _btn):
         self._sort_ascending = not self._sort_ascending
         if self._data:
             self._render()
-    
+
+    def _on_settings_clicked(self, _btn):
+        """Show settings dialog for API key."""
+        dialog = Adw.MessageDialog(
+            transient_for=self,
+            heading="Settings",
+            body=(
+                "Enter your Weblate API key to avoid rate limiting.\n"
+                "Find it at: l10n.elementaryos.org → Your profile → API access"
+            ),
+        )
+
+        # Add entry for API key
+        entry = Gtk.Entry(
+            placeholder_text="Weblate API key",
+            width_request=300,
+            margin_top=12,
+        )
+        config = weblate.load_config()
+        current_key = config.get("api_key", "")
+        if current_key:
+            entry.set_text(current_key)
+
+        dialog.set_extra_child(entry)
+        dialog.add_response("cancel", "Cancel")
+        dialog.add_response("save", "Save")
+        dialog.set_response_appearance("save", Adw.ResponseAppearance.SUGGESTED)
+
+        def on_response(dlg, response):
+            if response == "save":
+                key = entry.get_text().strip()
+                config = weblate.load_config()
+                if key:
+                    config["api_key"] = key
+                else:
+                    config.pop("api_key", None)
+                weblate.save_config(config)
+
+        dialog.connect("response", on_response)
+        dialog.present()
+
     def _on_info_clicked(self, _btn):
         dialog = Adw.MessageDialog(
             transient_for=self,
@@ -320,81 +359,17 @@ class MainWindow(Adw.ApplicationWindow):
         dialog.set_response_appearance("open", Adw.ResponseAppearance.SUGGESTED)
         dialog.connect("response", self._on_info_response)
         dialog.present()
-    
+
     def _on_info_response(self, dialog, response):
         if response == "open":
             webbrowser.open("https://l10n.elementaryos.org/")
-
-    def _check_first_run(self):
-        """Show welcome dialog on first run."""
-        config = weblate.load_config()
-        # Show if first_run is True or if config is empty (never run before)
-        if config.get("first_run", True) is not True and "first_run" in config:
-            return
-
-        dialog = Adw.MessageDialog(
-            transient_for=self,
-            heading="Welcome to elementary OS Translation Status!",
-            body=(
-                "This app shows the translation progress for all "
-                "elementary OS components, fetching live data from the "
-                "Weblate translation platform.\n\n"
-                "It works without an API key, but Weblate enforces rate "
-                "limits on unauthenticated requests. For a smoother "
-                "experience, we recommend creating a free account at "
-                "l10n.elementaryos.org and adding your API key in the "
-                "app configuration.\n\n"
-                "Your API key is stored locally in:\n"
-                "~/.config/elementary-l10n/config.json"
-            ),
-        )
-
-        # "Don't show again" checkbox via extra_child
-        check = Gtk.CheckButton(label="Don't show this again")
-        check.set_active(True)
-        dialog.set_extra_child(check)
-
-        dialog.add_response("continue", "Continue")
-        dialog.add_response("get_key", "Get API Key")
-        dialog.set_response_appearance("get_key", Adw.ResponseAppearance.SUGGESTED)
-        dialog.set_default_response("continue")
-
-        def on_response(_dialog, response):
-            if check.get_active():
-                config["first_run"] = False
-                weblate.save_config(config)
-            if response == "get_key":
-                webbrowser.open("https://l10n.elementaryos.org/accounts/profile/#api")
-
-        dialog.connect("response", on_response)
-        dialog.present()
-
-    def _on_about_clicked(self, _btn):
-        """Show About dialog."""
-        about = Adw.AboutDialog(
-            application_name="elementary OS Translation Status",
-            application_icon="preferences-desktop-locale-symbolic",
-            version="0.1.0",
-            developer_name="Daniel Nylander",
-            developers=["Daniel Nylander <daniel@danielnylander.se>"],
-            website="https://github.com/yeager/elementary-l10n",
-            issue_url="https://github.com/yeager/elementary-l10n/issues",
-            license_type=Gtk.License.GPL_3_0,
-            comments=(
-                "Monitor translation progress for elementary OS components. "
-                "Track completion percentages, find untranslated strings, "
-                "and contribute to making elementary OS available in your language."
-            ),
-            translator_credits="translator-credits",
-        )
-        about.present(self)
 
 
 class App(Adw.Application):
     def __init__(self):
         super().__init__(application_id="io.github.yeager.elementary-l10n",
                          flags=Gio.ApplicationFlags.FLAGS_NONE)
-    
+
     def do_activate(self):
         win = self.get_active_window()
         if not win:
