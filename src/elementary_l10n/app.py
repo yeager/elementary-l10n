@@ -1,6 +1,8 @@
 """Translation Status - GTK4/Adwaita Weblate translation viewer."""
 
+import csv
 import gettext
+import json
 import locale
 import os
 import sys
@@ -9,6 +11,13 @@ import webbrowser
 import gi
 gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
+# Optional desktop notifications
+try:
+    gi.require_version("Notify", "0.7")
+    from gi.repository import Notify as _Notify
+    HAS_NOTIFY = True
+except (ValueError, ImportError):
+    HAS_NOTIFY = False
 from gi.repository import Gtk, Adw, Gio, GLib, Gdk, Pango  # noqa: E402
 
 from . import weblate  # noqa: E402
@@ -83,6 +92,51 @@ def pct_to_color(pct: float) -> Gdk.RGBA:
     return rgba
 
 
+
+import json as _json
+import platform as _platform
+from pathlib import Path as _Path
+
+_NOTIFY_APP = "elementary-l10n"
+
+
+def _notify_config_path():
+    return _Path(GLib.get_user_config_dir()) / _NOTIFY_APP / "notifications.json"
+
+
+def _load_notify_config():
+    try:
+        return _json.loads(_notify_config_path().read_text())
+    except Exception:
+        return {"enabled": False}
+
+
+def _save_notify_config(config):
+    p = _notify_config_path()
+    p.parent.mkdir(parents=True, exist_ok=True)
+    p.write_text(_json.dumps(config))
+
+
+def _send_notification(summary, body="", icon="dialog-information"):
+    if HAS_NOTIFY and _load_notify_config().get("enabled"):
+        try:
+            n = _Notify.Notification.new(summary, body, icon)
+            n.show()
+        except Exception:
+            pass
+
+
+def _get_system_info():
+    return "\n".join([
+        f"App: Translation Status",
+        f"Version: {"0.2.1"}",
+        f"GTK: {Gtk.get_major_version()}.{Gtk.get_minor_version()}.{Gtk.get_micro_version()}",
+        f"Adw: {Adw.get_major_version()}.{Adw.get_minor_version()}.{Adw.get_micro_version()}",
+        f"Python: {_platform.python_version()}",
+        f"OS: {_platform.system()} {_platform.release()} ({_platform.machine()})",
+    ])
+
+
 class MainWindow(Adw.ApplicationWindow):
     def __init__(self, app):
         super().__init__(application=app, title=_("Translation Status"),
@@ -130,6 +184,12 @@ class MainWindow(Adw.ApplicationWindow):
                               tooltip_text=_("Toggle sort order"))
         sort_btn.connect("clicked", self._on_sort_clicked)
         header.pack_start(sort_btn)
+
+        # Export button
+        export_btn = Gtk.Button(icon_name="document-save-symbolic",
+                                tooltip_text=_("Export data"))
+        export_btn.connect("clicked", self._on_export_clicked)
+        header.pack_end(export_btn)
 
         # Settings button
         settings_btn = Gtk.Button(icon_name="emblem-system-symbolic",
