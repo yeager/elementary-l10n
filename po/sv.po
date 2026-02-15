@@ -1,5 +1,5 @@
 # SOME DESCRIPTIVE TITLE.
-# Copyright (C) YEAR elementary-l10n contributors
+# Copyright (C) YEAR Daniel Nylander
 # This file is distributed under the same license as the elementary-l10n package.
 # FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
 # 
@@ -9,9 +9,9 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: elementary-l10n 0.1.0\n"
-"Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-02-14 09:41+0100\n"
+"Project-Id-Version: elementary-l10n\n"
+"Report-Msgid-Bugs-To: daniel@danielnylander.se\n"
+"POT-Creation-Date: 2026-02-15 10:18+0100\n"
 "PO-Revision-Date: 2026-02-14 09:50+0000\n"
 "Last-Translator: Daniel Nylander <po@danielnylander.se>, 2026\n"
 "Language-Team: Swedish (https://app.transifex.com/danielnylander/teams/304761/sv/)\n"
@@ -21,66 +21,134 @@ msgstr ""
 "Language: sv\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: src/elementary_l10n/app.py:88
-msgid "elementary OS Translation Status"
-msgstr "Översättningsstatus för elementary OS"
+#: src/elementary_l10n/app.py:88 src/elementary_l10n/app.py:518
+msgid "Translation Status"
+msgstr "Översättningsstatus"
 
 #: src/elementary_l10n/app.py:109
 msgid "Select language"
 msgstr "Välj språk"
 
-#: src/elementary_l10n/app.py:115
+#: src/elementary_l10n/app.py:116
+msgid "All"
+msgstr "Alla"
+
+#: src/elementary_l10n/app.py:117
+msgid "Fully translated (100%)"
+msgstr "Helt översatt (100 %)"
+
+#: src/elementary_l10n/app.py:118
+msgid "Partially translated (1–99%)"
+msgstr "Delvis översatt (1–99 %)"
+
+#: src/elementary_l10n/app.py:119
+msgid "Untranslated (0%)"
+msgstr "Icke-översatt (0 %)"
+
+#: src/elementary_l10n/app.py:124
+msgid "Filter by status"
+msgstr "Filtrera efter status"
+
+#: src/elementary_l10n/app.py:130
 msgid "Toggle sort order"
 msgstr "Växla sorteringsordning"
 
-#: src/elementary_l10n/app.py:121 src/elementary_l10n/app.py:317
+#: src/elementary_l10n/app.py:136 src/elementary_l10n/app.py:471
 msgid "Settings"
 msgstr "Inställningar"
 
-#: src/elementary_l10n/app.py:127
+#: src/elementary_l10n/app.py:142
+msgid "About"
+msgstr "Om"
+
+#: src/elementary_l10n/app.py:148
 msgid "How to help translate"
 msgstr "Hur man hjälper till att översätta"
 
-#: src/elementary_l10n/app.py:133
+#: src/elementary_l10n/app.py:154
 msgid "Refresh data"
 msgstr "Uppdatera data"
 
-#: src/elementary_l10n/app.py:145
+#: src/elementary_l10n/app.py:166
 msgid "Loading translation data…"
-msgstr "Läser in översättningsdata..."
+msgstr "Läser in översättningsdata…"
 
-#: src/elementary_l10n/app.py:216
+#: src/elementary_l10n/app.py:257
 msgid "Failed to load data"
 msgstr "Misslyckades med att läsa in data"
 
-#: src/elementary_l10n/app.py:217
+#: src/elementary_l10n/app.py:258
 msgid "The Weblate instance might be temporarily unavailable."
 msgstr "Weblate-instansen kan vara tillfälligt otillgänglig."
 
-#: src/elementary_l10n/app.py:218
+#: src/elementary_l10n/app.py:259
 msgid "Click refresh to try again."
 msgstr "Klicka på uppdatera för att försöka igen."
 
-#: src/elementary_l10n/app.py:240
+#: src/elementary_l10n/app.py:291
 msgid "No components found."
 msgstr "Inga komponenter hittades."
 
-#: src/elementary_l10n/app.py:246
+#: src/elementary_l10n/app.py:297
 #, python-brace-format
 msgid "{count} components · {complete} fully translated · Average: {avg}%"
 msgstr "{count} komponenter · {complete} helt översatta · Genomsnitt: {avg}%"
 
-#: src/elementary_l10n/app.py:251
+#: src/elementary_l10n/app.py:302
 #, python-brace-format
 msgid "Cached data ({age} min ago)"
 msgstr "Cachat data ({age} min sedan)"
 
-#: src/elementary_l10n/app.py:266
+#: src/elementary_l10n/app.py:395
 #, python-brace-format
 msgid "Open {component} on Weblate"
 msgstr "Öppna {component} på Weblate"
 
-#: src/elementary_l10n/app.py:319
+#: src/elementary_l10n/app.py:419
+msgid "Weblate API Key Required"
+msgstr "Weblate API-nyckel krävs"
+
+#: src/elementary_l10n/app.py:420
+msgid "An API key is needed to fetch translation data."
+msgstr "En API-nyckel krävs för att hämta översättningsdata."
+
+#: src/elementary_l10n/app.py:425
+msgid "Welcome! API Key Required"
+msgstr "Välkommen! API-nyckel krävs"
+
+#: src/elementary_l10n/app.py:427
+msgid ""
+"To fetch translation status from Weblate, you need an API key.\n"
+"\n"
+"You can find your key at:\n"
+"https://l10n.elementaryos.org/accounts/profile/#api\n"
+"\n"
+"Log in (or create an account), then copy your API key below."
+msgstr ""
+"För att hämta översättningsstatus från Weblate behöver du en API-nyckel.\n"
+"\n"
+"Du hittar din nyckel på:\n"
+"https://l10n.elementaryos.org/accounts/profile/#api\n"
+"\n"
+"Logga in (eller skapa ett konto) och kopiera sedan din API-nyckel nedan."
+
+#: src/elementary_l10n/app.py:436
+msgid "Paste your API key here"
+msgstr "Klistra in din API-nyckel här"
+
+#: src/elementary_l10n/app.py:441
+msgid "Open Weblate profile to get your API key"
+msgstr "Öppna Weblate-profilen för att hämta din API-nyckel"
+
+#: src/elementary_l10n/app.py:447 src/elementary_l10n/app.py:496
+msgid "Cancel"
+msgstr "Avbryt"
+
+#: src/elementary_l10n/app.py:448
+msgid "Save & Continue"
+msgstr "Spara och fortsätt"
+
+#: src/elementary_l10n/app.py:473
 msgid ""
 "Enter your Weblate API key to avoid rate limiting.\n"
 "Find it at: l10n.elementaryos.org → Your profile → API access"
@@ -88,25 +156,33 @@ msgstr ""
 "Ange din Weblate API-nyckel för att undvika hastighetsbegränsningar.\n"
 "Du hittar den på: l10n.elementaryos.org → Din profil → API-åtkomst"
 
-#: src/elementary_l10n/app.py:326
+#: src/elementary_l10n/app.py:481
 msgid "Weblate API key"
 msgstr "API-nyckel för Weblate"
 
-#: src/elementary_l10n/app.py:336
-msgid "Cancel"
-msgstr "Avbryt"
+#: src/elementary_l10n/app.py:490
+msgid "Get your API key from Weblate"
+msgstr "Hämta din API-nyckel från Weblate"
 
-#: src/elementary_l10n/app.py:337
+#: src/elementary_l10n/app.py:497
 msgid "Save"
 msgstr "Spara"
 
-#: src/elementary_l10n/app.py:356
-msgid "Help Translate elementary OS!"
-msgstr "Hjälp till att översätta elementary OS!"
-
-#: src/elementary_l10n/app.py:358
+#: src/elementary_l10n/app.py:527
 msgid ""
-"elementary OS is translated by volunteers like you using Weblate — a web-based translation tool.\n"
+"View translation status for elementary OS apps on Weblate. Track progress "
+"across languages and components."
+msgstr ""
+"Visa översättningsstatus för elementary OS-appar på Weblate. Följ framstegen"
+" för olika språk och komponenter."
+
+#: src/elementary_l10n/app.py:535
+msgid "Help Translate!"
+msgstr "Hjälp till att översätta!"
+
+#: src/elementary_l10n/app.py:537
+msgid ""
+"Translations are contributed by volunteers using Weblate — a web-based translation tool.\n"
 "\n"
 "Getting started is easy:\n"
 "\n"
@@ -115,9 +191,9 @@ msgid ""
 "3. Pick a component and your language\n"
 "4. Start translating — no coding skills needed!\n"
 "\n"
-"Every translated string helps make elementary OS accessible to more people around the world. Even translating a few strings makes a difference."
+"Every translated string helps make software accessible to more people around the world. Even translating a few strings makes a difference."
 msgstr ""
-"elementary OS översätts av volontärer som du med hjälp av Weblate – ett webbaserat översättningsverktyg.\n"
+"Översättningarna görs av frivilliga som använder Weblate – ett webbaserat översättningsverktyg.\n"
 "\n"
 "Det är enkelt att komma igång:\n"
 "\n"
@@ -126,20 +202,12 @@ msgstr ""
 "3. Välj en komponent och ditt språk\n"
 "4. Börja översätta – inga kodningskunskaper krävs!\n"
 "\n"
-"Varje översatt sträng bidrar till att göra elementary OS tillgängligt för fler människor runt om i världen. Även om du bara översätter några få strängar gör det skillnad."
+"Varje översatt sträng bidrar till att göra programvaran tillgänglig för fler människor runt om i världen. Även om du bara översätter några få strängar gör det skillnad."
 
-#: src/elementary_l10n/app.py:370
+#: src/elementary_l10n/app.py:549
 msgid "Close"
 msgstr "Stäng"
 
-#: src/elementary_l10n/app.py:371
+#: src/elementary_l10n/app.py:550
 msgid "Open Weblate"
 msgstr "Öppna Weblate"
-
-#: desktop file
-msgid "View translation status for elementary OS"
-msgstr "Visa översättningsstatus för elementary OS"
-
-#: desktop file
-msgid "translation;l10n;elementary;weblate;"
-msgstr "översättning;l10n;elementary;weblate;"
