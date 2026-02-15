@@ -1,9 +1,22 @@
-__pycache__/
-*.pyc
-*.egg-info/
+# Build artifacts
+build-new/
+rpm-build/
+pkg/
+deb-build/
 dist/
 build/
-.eggs/
+*.deb
+*.rpm
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
 *.egg
-.venv/
-po/locale/
+
+# Editor
+*.swp
+*~
+.vscode/
+.idea/
