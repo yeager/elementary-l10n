@@ -9,6 +9,14 @@ from typing import Callable
 
 import requests
 
+try:
+    import gi
+    gi.require_version('Secret', '1')
+    from gi.repository import Secret
+    HAS_LIBSECRET = True
+except (ImportError, ValueError):
+    HAS_LIBSECRET = False
+
 BASE_URL = "https://l10n.elementaryos.org"
 API = f"{BASE_URL}/api"
 
@@ -19,19 +27,95 @@ CACHE_FILE = CACHE_DIR / "cache.json"
 
 REQUEST_DELAY = 0.6  # seconds between API calls
 
+# libsecret schema for storing the API key securely
+if HAS_LIBSECRET:
+    _SECRET_SCHEMA = Secret.Schema.new(
+        "se.danielnylander.elementary-l10n",
+        Secret.SchemaFlags.NONE,
+        {"application": Secret.SchemaAttributeType.STRING},
+    )
+
+
+def _get_api_key_from_keyring() -> str | None:
+    """Retrieve API key from GNOME Keyring via libsecret."""
+    if not HAS_LIBSECRET:
+        return None
+    try:
+        return Secret.password_lookup_sync(
+            _SECRET_SCHEMA, {"application": "elementary-l10n"}, None
+        )
+    except Exception:
+        return None
+
+
+def _store_api_key_in_keyring(api_key: str) -> bool:
+    """Store API key in GNOME Keyring via libsecret."""
+    if not HAS_LIBSECRET:
+        return False
+    try:
+        Secret.password_store_sync(
+            _SECRET_SCHEMA,
+            {"application": "elementary-l10n"},
+            Secret.COLLECTION_DEFAULT,
+            "elementary-l10n Weblate API Key",
+            api_key,
+            None,
+        )
+        return True
+    except Exception:
+        return False
+
+
+def _clear_api_key_from_keyring() -> bool:
+    """Remove API key from GNOME Keyring."""
+    if not HAS_LIBSECRET:
+        return False
+    try:
+        Secret.password_clear_sync(
+            _SECRET_SCHEMA, {"application": "elementary-l10n"}, None
+        )
+        return True
+    except Exception:
+        return False
+
 
 def load_config() -> dict:
-    """Load config from ~/.config/elementary-l10n/config.json."""
+    """Load config. API key from keyring first, then config file as fallback."""
     try:
-        return json.loads(CONFIG_FILE.read_text())
+        config = json.loads(CONFIG_FILE.read_text())
     except Exception:
-        return {}
+        config = {}
+
+    # Try keyring first for API key
+    keyring_key = _get_api_key_from_keyring()
+    if keyring_key:
+        config["api_key"] = keyring_key
+    elif config.get("api_key"):
+        # Migrate plaintext key to keyring
+        if _store_api_key_in_keyring(config["api_key"]):
+            # Remove from plaintext config
+            migrated_config = {k: v for k, v in config.items() if k != "api_key"}
+            CONFIG_DIR.mkdir(parents=True, exist_ok=True)
+            CONFIG_FILE.write_text(json.dumps(migrated_config, indent=2))
+
+    return config
 
 
 def save_config(config: dict):
-    """Save config to ~/.config/elementary-l10n/config.json."""
+    """Save config. API key goes to keyring, rest to config file."""
+    api_key = config.pop("api_key", None)
+
+    if api_key:
+        if not _store_api_key_in_keyring(api_key):
+            # Fallback: save in config file if keyring unavailable
+            config["api_key"] = api_key
+
     CONFIG_DIR.mkdir(parents=True, exist_ok=True)
     CONFIG_FILE.write_text(json.dumps(config, indent=2))
+
+    # Restore key in dict so callers still have it
+    if api_key:
+        config["api_key"] = api_key
 
 
 def load_cache(language_code: str) -> tuple[list | None, float | None]:
