@@ -457,6 +457,43 @@ class MainWindow(Adw.ApplicationWindow):
 
         return tile
 
+    def _on_export_clicked(self, *_args):
+        dialog = Adw.MessageDialog(transient_for=self,
+                                   heading=_("Export Data"),
+                                   body=_("Choose export format:"))
+        dialog.add_response("cancel", _("Cancel"))
+        dialog.add_response("csv", "CSV")
+        dialog.add_response("json", "JSON")
+        dialog.set_response_appearance("csv", Adw.ResponseAppearance.SUGGESTED)
+        dialog.connect("response", self._on_export_format_chosen)
+        dialog.present()
+
+    def _on_export_format_chosen(self, dialog, response):
+        if response not in ("csv", "json"):
+            return
+        self._export_fmt = response
+        fd = Gtk.FileDialog()
+        fd.set_initial_name(f"translation-status.{response}")
+        fd.save(self, None, self._on_export_save)
+
+    def _on_export_save(self, dialog, result):
+        try:
+            path = dialog.save_finish(result).get_path()
+        except Exception:
+            return
+        data = [{"project": r["project"], "component": r["component"],
+                 "translated_percent": r["translated_percent"],
+                 "translate_url": r["translate_url"]}
+                for r in self._data]
+        if self._export_fmt == "csv" and data:
+            with open(path, "w", newline="", encoding="utf-8") as f:
+                w = csv.DictWriter(f, fieldnames=data[0].keys())
+                w.writeheader()
+                w.writerows(data)
+        else:
+            with open(path, "w", encoding="utf-8") as f:
+                json.dump(data, f, ensure_ascii=False, indent=2)
+
     def _on_lang_changed(self, dropdown, _pspec):
         idx = dropdown.get_selected()
         if idx < len(self._lang_codes):
@@ -628,6 +665,19 @@ class App(Adw.Application):
         if not win:
             win = MainWindow(self)
         win.present()
+
+    def do_startup(self):
+        Adw.Application.do_startup(self)
+        self.set_accels_for_action("app.export", ["<Control>e"])
+
+        export_action = Gio.SimpleAction.new("export", None)
+        export_action.connect("activate", self._on_export_activate)
+        self.add_action(export_action)
+
+    def _on_export_activate(self, *_args):
+        win = self.get_active_window()
+        if win:
+            win._on_export_clicked()
 
 
 def main():
