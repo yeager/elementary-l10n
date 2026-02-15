@@ -96,6 +96,7 @@ def pct_to_color(pct: float) -> Gdk.RGBA:
 import json as _json
 import platform as _platform
 from pathlib import Path as _Path
+from datetime import datetime as _dt_now
 
 _NOTIFY_APP = "elementary-l10n"
 
@@ -203,6 +204,12 @@ class MainWindow(Adw.ApplicationWindow):
         about_btn.connect("clicked", self._on_about_clicked)
         header.pack_end(about_btn)
 
+        # Theme toggle
+        self._theme_btn = Gtk.Button(icon_name="weather-clear-night-symbolic",
+                                     tooltip_text=_("Toggle dark/light theme"))
+        self._theme_btn.connect("clicked", self._on_theme_toggle)
+        header.pack_end(self._theme_btn)
+
         # Info button
         info_btn = Gtk.Button(icon_name="dialog-information-symbolic",
                               tooltip_text=_("How to help translate"))
@@ -256,6 +263,13 @@ class MainWindow(Adw.ApplicationWindow):
         content_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
         content_box.append(self._stack)
         content_box.append(self._summary)
+
+        # Status bar
+        self._status_bar = Gtk.Label(label="", halign=Gtk.Align.START,
+                                     margin_start=12, margin_end=12, margin_bottom=4)
+        self._status_bar.add_css_class("dim-label")
+        self._status_bar.add_css_class("caption")
+        content_box.append(self._status_bar)
 
         toolbar_view = Adw.ToolbarView()
         toolbar_view.add_top_bar(header)
@@ -367,6 +381,7 @@ class MainWindow(Adw.ApplicationWindow):
             self._flow_box.append(self._make_tile(row))
 
         self._stack.set_visible_child_name("data")
+        self._update_status_bar()
 
     def _make_tile(self, item):
         """Create a compact heatmap tile for a component."""
@@ -493,6 +508,19 @@ class MainWindow(Adw.ApplicationWindow):
         else:
             with open(path, "w", encoding="utf-8") as f:
                 json.dump(data, f, ensure_ascii=False, indent=2)
+
+
+    def _on_theme_toggle(self, _btn):
+        sm = Adw.StyleManager.get_default()
+        if sm.get_color_scheme() == Adw.ColorScheme.FORCE_DARK:
+            sm.set_color_scheme(Adw.ColorScheme.FORCE_LIGHT)
+            self._theme_btn.set_icon_name("weather-clear-night-symbolic")
+        else:
+            sm.set_color_scheme(Adw.ColorScheme.FORCE_DARK)
+            self._theme_btn.set_icon_name("weather-clear-symbolic")
+
+    def _update_status_bar(self):
+        self._status_bar.set_text("Last updated: " + _dt_now.now().strftime("%Y-%m-%d %H:%M"))
 
     def _on_lang_changed(self, dropdown, _pspec):
         idx = dropdown.get_selected()
@@ -659,6 +687,31 @@ class App(Adw.Application):
     def __init__(self):
         super().__init__(application_id="se.danielnylander.TranslationStatus",
                          flags=Gio.ApplicationFlags.FLAGS_NONE)
+
+    def do_startup(self):
+        Adw.Application.do_startup(self)
+        self.set_accels_for_action("app.quit", ["<Control>q"])
+        self.set_accels_for_action("app.refresh", ["F5"])
+        self.set_accels_for_action("app.shortcuts", ["<Control>slash"])
+        for n, cb in [("quit", lambda *_: self.quit()),
+                      ("refresh", lambda *_: self._do_refresh()),
+                      ("shortcuts", self._show_shortcuts_window)]:
+            a = Gio.SimpleAction.new(n, None); a.connect("activate", cb); self.add_action(a)
+
+    def _do_refresh(self):
+        w = self.get_active_window()
+        if w: w._load_data(force=True)
+
+    def _show_shortcuts_window(self, *_args):
+        win = Gtk.ShortcutsWindow(transient_for=self.get_active_window(), modal=True)
+        section = Gtk.ShortcutsSection(visible=True, max_height=10)
+        group = Gtk.ShortcutsGroup(visible=True, title="General")
+        for accel, title in [("<Control>q", "Quit"), ("F5", "Refresh"), ("<Control>slash", "Keyboard shortcuts")]:
+            s = Gtk.ShortcutsShortcut(visible=True, accelerator=accel, title=title)
+            group.append(s)
+        section.append(group)
+        win.add_child(section)
+        win.present()
 
     def do_activate(self):
         win = self.get_active_window()
