@@ -110,6 +110,21 @@ class MainWindow(Adw.ApplicationWindow):
         self._lang_dropdown.connect("notify::selected", self._on_lang_changed)
         header.pack_start(self._lang_dropdown)
 
+        # Status filter dropdown
+        filter_model = Gtk.StringList()
+        self._filter_options = [
+            ("all", _("All")),
+            ("complete", _("Fully translated (100%)")),
+            ("partial", _("Partially translated (1–99%)")),
+            ("untranslated", _("Untranslated (0%)")),
+        ]
+        for _key, label in self._filter_options:
+            filter_model.append(label)
+        self._filter_dropdown = Gtk.DropDown(model=filter_model, selected=0)
+        self._filter_dropdown.set_tooltip_text(_("Filter by status"))
+        self._filter_dropdown.connect("notify::selected", self._on_filter_changed)
+        header.pack_start(self._filter_dropdown)
+
         # Sort button
         sort_btn = Gtk.Button(icon_name="view-sort-descending-symbolic",
                               tooltip_text=_("Toggle sort order"))
@@ -259,7 +274,17 @@ class MainWindow(Adw.ApplicationWindow):
                 break
             self._flow_box.remove(child)
 
-        data = sorted(self._data, key=lambda r: r["translated_percent"],
+        # Apply status filter
+        filter_key = self._filter_options[self._filter_dropdown.get_selected()][0]
+        data = self._data
+        if filter_key == "complete":
+            data = [r for r in data if r["translated_percent"] >= 100]
+        elif filter_key == "partial":
+            data = [r for r in data if 0 < r["translated_percent"] < 100]
+        elif filter_key == "untranslated":
+            data = [r for r in data if r["translated_percent"] == 0]
+
+        data = sorted(data, key=lambda r: r["translated_percent"],
                        reverse=not self._sort_ascending)
 
         if not data:
@@ -377,6 +402,10 @@ class MainWindow(Adw.ApplicationWindow):
         if idx < len(self._lang_codes):
             self._current_lang = self._lang_codes[idx]
             self._load_data()
+
+    def _on_filter_changed(self, _dropdown, _pspec):
+        if self._data:
+            self._render()
 
     def _on_sort_clicked(self, _btn):
         self._sort_ascending = not self._sort_ascending
