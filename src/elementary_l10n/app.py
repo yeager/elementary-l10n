@@ -338,6 +338,13 @@ class MainWindow(Adw.ApplicationWindow):
         self._data = rows
         self._from_cache = from_cache
         self._cache_age = age_minutes
+        # Notify about low translations
+        low = [r["component"] for r in rows if r["translated_percent"] < 50 and r["translated_percent"] > 0]
+        if low:
+            _send_notification(
+                _("elementary L10n: Low translations"),
+                _("{count} components below 50%").format(count=len(low)),
+                "se.danielnylander.TranslationStatus")
         self._render()
 
     def _render(self):
@@ -589,6 +596,11 @@ class MainWindow(Adw.ApplicationWindow):
         dialog.connect("response", on_response)
         dialog.present()
 
+    def _on_toggle_notifications(self, _btn):
+        config = _load_notify_config()
+        config["enabled"] = not config.get("enabled", False)
+        _save_notify_config(config)
+
     def _on_settings_clicked(self, _btn):
         """Show settings dialog for API key."""
         dialog = Adw.MessageDialog(
@@ -653,6 +665,8 @@ class MainWindow(Adw.ApplicationWindow):
             comments=_("View translation status for elementary OS apps on Weblate. Track progress across languages and components."),
             translator_credits="Daniel Nylander <daniel@danielnylander.se>",
         )
+        about.set_debug_info(_get_system_info())
+        about.set_debug_info_filename("elementary-l10n-debug.txt")
         about.present()
 
     def _on_info_clicked(self, _btn):
@@ -687,6 +701,8 @@ class App(Adw.Application):
     def __init__(self):
         super().__init__(application_id="se.danielnylander.TranslationStatus",
                          flags=Gio.ApplicationFlags.FLAGS_NONE)
+        if HAS_NOTIFY:
+            _Notify.init("elementary-l10n")
 
     def do_startup(self):
         Adw.Application.do_startup(self)
