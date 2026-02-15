@@ -96,7 +96,6 @@ def pct_to_color(pct: float) -> Gdk.RGBA:
 import json as _json
 import platform as _platform
 from pathlib import Path as _Path
-from datetime import datetime as _dt_now
 
 _NOTIFY_APP = "elementary-l10n"
 
