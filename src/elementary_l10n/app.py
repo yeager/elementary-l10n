@@ -524,6 +524,7 @@ class MainWindow(Adw.ApplicationWindow):
             license_type=Gtk.License.GPL_3_0,
             website="https://github.com/yeager/elementary-l10n",
             issue_url="https://github.com/yeager/elementary-l10n/issues",
+            translate_url="https://app.transifex.com/danielnylander/elementary-l10n/",
             comments=_("View translation status for elementary OS apps on Weblate. Track progress across languages and components."),
             translator_credits="Daniel Nylander <daniel@danielnylander.se>",
         )
