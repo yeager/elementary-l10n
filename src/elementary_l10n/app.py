@@ -491,12 +491,12 @@ class MainWindow(Adw.ApplicationWindow):
             version="0.2.1",
             developer_name="Daniel Nylander",
             developers=["Daniel Nylander <daniel@danielnylander.se>"],
-            copyright="© 2025 Daniel Nylander",
+            copyright="© 2026 Daniel Nylander",
             license_type=Gtk.License.GPL_3_0,
             website="https://github.com/yeager/elementary-l10n",
             issue_url="https://github.com/yeager/elementary-l10n/issues",
-            comments=_("View translation progress for Weblate-hosted projects"),
-            translator_credits=_("Translate this app: https://app.transifex.com/danielnylander/elementary-l10n/"),
+            comments=_("View translation status for elementary OS apps on Weblate. Track progress across languages and components."),
+            translator_credits="Daniel Nylander <daniel@danielnylander.se>",
         )
         about.present()
 
