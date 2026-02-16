@@ -189,3 +189,11 @@ msgstr ""
 #: src/elementary_l10n/app.py:550
 msgid "Open Weblate"
 msgstr ""
+
+#: elementary-l10n/data/se.danielnylander.TranslationStatus.desktop.in
+msgid "View translation progress for Weblate-hosted projects"
+msgstr ""
+
+#: elementary-l10n/data/se.danielnylander.TranslationStatus.desktop.in
+msgid "translation;l10n;weblate;localization;"
+msgstr ""

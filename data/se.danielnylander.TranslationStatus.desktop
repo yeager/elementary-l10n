@@ -2,7 +2,6 @@
 Name=Translation Status
 Name[sv]=Översättningsstatus
 Comment=View translation progress for Weblate-hosted projects
-Comment[sv]=Visa översättningsförlopp för Weblate-projekt
 Exec=elementary-l10n
 Icon=se.danielnylander.TranslationStatus
 Terminal=false
