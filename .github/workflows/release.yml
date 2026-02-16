@@ -42,7 +42,13 @@ jobs:
 
       - name: Generate translated .desktop file
         run: |
-          python3 desktop-merge.py data/se.danielnylander.elementary-l10n.desktop.in po/ data/se.danielnylander.elementary-l10n.desktop
+          TEMPLATE=$(find data/ -name "*.desktop.in" 2>/dev/null | head -1)
+          if [ -n "$TEMPLATE" ]; then
+            OUT="${TEMPLATE%.in}"
+            python3 desktop-merge.py "$TEMPLATE" po/ "$OUT"
+          else
+            echo "No .desktop.in found, skipping"
+          fi
 
       - name: Build .deb
         run: |
