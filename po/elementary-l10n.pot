@@ -1,14 +1,14 @@
 # SOME DESCRIPTIVE TITLE.
-# Copyright (C) YEAR Daniel Nylander
-# This file is distributed under the same license as the elementary-l10n package.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
 # FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
 #
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: elementary-l10n\n"
-"Report-Msgid-Bugs-To: daniel@danielnylander.se\n"
-"POT-Creation-Date: 2026-02-15 10:18+0100\n"
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-02-16 17:14+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,102 +17,132 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: src/elementary_l10n/app.py:88 src/elementary_l10n/app.py:518
+#: src/elementary_l10n/app.py:142 src/elementary_l10n/app.py:653
 msgid "Translation Status"
 msgstr ""
 
-#: src/elementary_l10n/app.py:109
+#: src/elementary_l10n/app.py:163
 msgid "Select language"
 msgstr ""
 
-#: src/elementary_l10n/app.py:116
+#: src/elementary_l10n/app.py:170
 msgid "All"
 msgstr ""
 
-#: src/elementary_l10n/app.py:117
+#: src/elementary_l10n/app.py:171
 msgid "Fully translated (100%)"
 msgstr ""
 
-#: src/elementary_l10n/app.py:118
+#: src/elementary_l10n/app.py:172
 msgid "Partially translated (1–99%)"
 msgstr ""
 
-#: src/elementary_l10n/app.py:119
+#: src/elementary_l10n/app.py:173
 msgid "Untranslated (0%)"
 msgstr ""
 
-#: src/elementary_l10n/app.py:124
+#: src/elementary_l10n/app.py:178
 msgid "Filter by status"
 msgstr ""
 
-#: src/elementary_l10n/app.py:130
+#: src/elementary_l10n/app.py:184
 msgid "Toggle sort order"
 msgstr ""
 
-#: src/elementary_l10n/app.py:136 src/elementary_l10n/app.py:471
+#: src/elementary_l10n/app.py:190
+msgid "Export data"
+msgstr ""
+
+#: src/elementary_l10n/app.py:196 src/elementary_l10n/app.py:607
 msgid "Settings"
 msgstr ""
 
-#: src/elementary_l10n/app.py:142
+#: src/elementary_l10n/app.py:202
 msgid "About"
 msgstr ""
 
-#: src/elementary_l10n/app.py:148
+#: src/elementary_l10n/app.py:208
+msgid "Toggle dark/light theme"
+msgstr ""
+
+#: src/elementary_l10n/app.py:214
 msgid "How to help translate"
 msgstr ""
 
-#: src/elementary_l10n/app.py:154
+#: src/elementary_l10n/app.py:220
 msgid "Refresh data"
 msgstr ""
 
-#: src/elementary_l10n/app.py:166
+#: src/elementary_l10n/app.py:232
 msgid "Loading translation data…"
 msgstr ""
 
-#: src/elementary_l10n/app.py:257
+#: src/elementary_l10n/app.py:330
 msgid "Failed to load data"
 msgstr ""
 
-#: src/elementary_l10n/app.py:258
+#: src/elementary_l10n/app.py:331
 msgid "The Weblate instance might be temporarily unavailable."
 msgstr ""
 
-#: src/elementary_l10n/app.py:259
+#: src/elementary_l10n/app.py:332
 msgid "Click refresh to try again."
 msgstr ""
 
-#: src/elementary_l10n/app.py:291
+#: src/elementary_l10n/app.py:344
+msgid "elementary L10n: Low translations"
+msgstr ""
+
+#: src/elementary_l10n/app.py:345
+#, python-brace-format
+msgid "{count} components below 50%"
+msgstr ""
+
+#: src/elementary_l10n/app.py:371
 msgid "No components found."
 msgstr ""
 
-#: src/elementary_l10n/app.py:297
+#: src/elementary_l10n/app.py:377
 #, python-brace-format
 msgid "{count} components · {complete} fully translated · Average: {avg}%"
 msgstr ""
 
-#: src/elementary_l10n/app.py:302
+#: src/elementary_l10n/app.py:382
 #, python-brace-format
 msgid "Cached data ({age} min ago)"
 msgstr ""
 
-#: src/elementary_l10n/app.py:395
+#: src/elementary_l10n/app.py:476
 #, python-brace-format
 msgid "Open {component} on Weblate"
 msgstr ""
 
-#: src/elementary_l10n/app.py:419
+#: src/elementary_l10n/app.py:483
+msgid "Export Data"
+msgstr ""
+
+#: src/elementary_l10n/app.py:484
+msgid "Choose export format:"
+msgstr ""
+
+#: src/elementary_l10n/app.py:485 src/elementary_l10n/app.py:578
+#: src/elementary_l10n/app.py:632
+msgid "Cancel"
+msgstr ""
+
+#: src/elementary_l10n/app.py:550
 msgid "Weblate API Key Required"
 msgstr ""
 
-#: src/elementary_l10n/app.py:420
+#: src/elementary_l10n/app.py:551
 msgid "An API key is needed to fetch translation data."
 msgstr ""
 
-#: src/elementary_l10n/app.py:425
+#: src/elementary_l10n/app.py:556
 msgid "Welcome! API Key Required"
 msgstr ""
 
-#: src/elementary_l10n/app.py:427
+#: src/elementary_l10n/app.py:558
 msgid ""
 "To fetch translation status from Weblate, you need an API key.\n"
 "\n"
@@ -122,51 +152,47 @@ msgid ""
 "Log in (or create an account), then copy your API key below."
 msgstr ""
 
-#: src/elementary_l10n/app.py:436
+#: src/elementary_l10n/app.py:567
 msgid "Paste your API key here"
 msgstr ""
 
-#: src/elementary_l10n/app.py:441
+#: src/elementary_l10n/app.py:572
 msgid "Open Weblate profile to get your API key"
 msgstr ""
 
-#: src/elementary_l10n/app.py:447 src/elementary_l10n/app.py:496
-msgid "Cancel"
-msgstr ""
-
-#: src/elementary_l10n/app.py:448
+#: src/elementary_l10n/app.py:579
 msgid "Save & Continue"
 msgstr ""
 
-#: src/elementary_l10n/app.py:473
+#: src/elementary_l10n/app.py:609
 msgid ""
 "Enter your Weblate API key to avoid rate limiting.\n"
 "Find it at: l10n.elementaryos.org → Your profile → API access"
 msgstr ""
 
-#: src/elementary_l10n/app.py:481
+#: src/elementary_l10n/app.py:617
 msgid "Weblate API key"
 msgstr ""
 
-#: src/elementary_l10n/app.py:490
+#: src/elementary_l10n/app.py:626
 msgid "Get your API key from Weblate"
 msgstr ""
 
-#: src/elementary_l10n/app.py:497
+#: src/elementary_l10n/app.py:633
 msgid "Save"
 msgstr ""
 
-#: src/elementary_l10n/app.py:527
+#: src/elementary_l10n/app.py:663
 msgid ""
 "View translation status for elementary OS apps on Weblate. Track progress "
 "across languages and components."
 msgstr ""
 
-#: src/elementary_l10n/app.py:535
+#: src/elementary_l10n/app.py:673
 msgid "Help Translate!"
 msgstr ""
 
-#: src/elementary_l10n/app.py:537
+#: src/elementary_l10n/app.py:675
 msgid ""
 "Translations are contributed by volunteers using Weblate — a web-based "
 "translation tool.\n"
@@ -182,18 +208,10 @@ msgid ""
 "the world. Even translating a few strings makes a difference."
 msgstr ""
 
-#: src/elementary_l10n/app.py:549
+#: src/elementary_l10n/app.py:687
 msgid "Close"
 msgstr ""
 
-#: src/elementary_l10n/app.py:550
+#: src/elementary_l10n/app.py:688
 msgid "Open Weblate"
-msgstr ""
-
-#: elementary-l10n/data/se.danielnylander.TranslationStatus.desktop.in
-msgid "View translation progress for Weblate-hosted projects"
-msgstr ""
-
-#: elementary-l10n/data/se.danielnylander.TranslationStatus.desktop.in
-msgid "translation;l10n;weblate;localization;"
 msgstr ""
