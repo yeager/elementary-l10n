@@ -649,8 +649,7 @@ class MainWindow(Adw.ApplicationWindow):
         dialog.present()
 
     def _on_about_clicked(self, _btn):
-        about = Adw.AboutWindow(
-            transient_for=self,
+        about = Adw.AboutDialog(
             application_name=_("Translation Status"),
             application_icon="se.danielnylander.TranslationStatus",
             version="0.2.1",
@@ -666,7 +665,7 @@ class MainWindow(Adw.ApplicationWindow):
         )
         about.set_debug_info(_get_system_info())
         about.set_debug_info_filename("elementary-l10n-debug.txt")
-        about.present()
+        about.present(self)
 
     def _on_info_clicked(self, _btn):
         dialog = Adw.MessageDialog(
