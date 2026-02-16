@@ -21,40 +21,33 @@ jobs:
         id: version
         run: echo "version=$(grep -oP '__version__ = "\K[^"]+' src/elementary_l10n/__init__.py)" >> $GITHUB_OUTPUT
 
-      - name: Build RPM
-        env:
-          VERSION: ${{ steps.version.outputs.version }}
-        shell: python3 {0}
+      - name: Setup RPM build
         run: |
-          import os, subprocess, textwrap, datetime
-          version = os.environ["VERSION"]
-          pkg = f"elementary-l10n-{version}"
-          home = os.path.expanduser("~")
+          mkdir -p ~/rpmbuild/{BUILD,RPMS,SOURCES,SPECS,SRPMS}
+          VERSION=${{ steps.version.outputs.version }}
+          DIR=elementary-l10n-$VERSION
+          mkdir -p $DIR/src/elementary_l10n
+          mkdir -p $DIR/data/icons $DIR/data/man
+          cp src/elementary_l10n/*.py $DIR/src/elementary_l10n/
+          cp data/se.danielnylander.TranslationStatus.desktop $DIR/data/
+          cp data/icons/se.danielnylander.elementary-l10n.svg $DIR/data/icons/
+          cp data/icons/elementary-l10n.svg $DIR/data/icons/
+          cp data/man/elementary-l10n.1 $DIR/data/man/
+          cp data/se.danielnylander.TranslationStatus.metainfo.xml $DIR/data/
+          cp COPYING $DIR/
+          test -f po/sv/LC_MESSAGES/elementary-l10n.mo && { mkdir -p $DIR/po/sv/LC_MESSAGES; cp po/sv/LC_MESSAGES/elementary-l10n.mo $DIR/po/sv/LC_MESSAGES/; } || true
+          tar czf ~/rpmbuild/SOURCES/$DIR.tar.gz $DIR
 
-          for d in ["BUILD","RPMS","SOURCES","SPECS","SRPMS"]:
-              os.makedirs(f"{home}/rpmbuild/{d}", exist_ok=True)
-
-          os.makedirs(f"{pkg}/src/elementary_l10n", exist_ok=True)
-          os.makedirs(f"{pkg}/data/icons", exist_ok=True)
-          os.makedirs(f"{pkg}/data/man", exist_ok=True)
-          subprocess.run(f"cp src/elementary_l10n/*.py {pkg}/src/elementary_l10n/", shell=True, check=True)
-          subprocess.run(f"cp data/se.danielnylander.TranslationStatus.desktop {pkg}/data/", shell=True, check=True)
-          subprocess.run(f"cp data/icons/elementary-l10n.svg data/icons/se.danielnylander.elementary-l10n.svg {pkg}/data/icons/", shell=True, check=True)
-          subprocess.run(f"cp data/man/elementary-l10n.1 {pkg}/data/man/", shell=True, check=True)
-          subprocess.run(f"cp data/se.danielnylander.TranslationStatus.metainfo.xml {pkg}/data/", shell=True, check=True)
-          subprocess.run(f"cp COPYING {pkg}/", shell=True, check=True)
-          subprocess.run(f"test -d locale && cp -r locale {pkg}/ || true", shell=True, check=True)
-          subprocess.run(f"tar czf {home}/rpmbuild/SOURCES/elementary-l10n-{version}.tar.gz {pkg}", shell=True, check=True)
-
-          today = datetime.datetime.now().strftime("%a %b %d %Y")
-          spec = textwrap.dedent(f"""\
+      - name: Create spec file
+        run: |
+          cat > ~/rpmbuild/SPECS/elementary-l10n.spec << 'SPEC'
           Name:           elementary-l10n
-          Version:        {version}
+          Version:        VERSION_PLACEHOLDER
           Release:        1
-          Summary:        elementary-l10n
+          Summary:        elementary OS translation status viewer
           License:        GPL-3.0-or-later
           URL:            https://github.com/yeager/elementary-l10n
-          Source0:        %{{name}}-%{{version}}.tar.gz
+          Source0:        %{name}-%{version}.tar.gz
           BuildArch:      noarch
           Requires:       python3 >= 3.9
           Requires:       python3-gobject
@@ -63,51 +56,46 @@ jobs:
           Requires:       python3-requests
 
           %description
-          elementary-l10n application.
+          A GTK4/Libadwaita application for viewing elementary OS translation status.
 
           %prep
           %setup -q
 
           %install
-          mkdir -p %{{buildroot}}%{{_datadir}}/elementary-l10n
-          cp src/elementary_l10n/*.py %{{buildroot}}%{{_datadir}}/elementary-l10n/
-          mkdir -p %{{buildroot}}%{{_bindir}}
-          cat > %{{buildroot}}%{{_bindir}}/elementary-l10n << 'WRAPPER'
+          mkdir -p %{buildroot}%{_datadir}/elementary-l10n/elementary_l10n
+          cp src/elementary_l10n/*.py %{buildroot}%{_datadir}/elementary-l10n/elementary_l10n/
+          mkdir -p %{buildroot}%{_bindir}
+          cat > %{buildroot}%{_bindir}/elementary-l10n << 'WRAPPER'
           #!/bin/bash
-          exec python3 %{{_datadir}}/elementary-l10n/app.py "$@"
+          exec python3 -c "import sys; sys.path.insert(0, '/usr/share/elementary-l10n'); from elementary_l10n.app import main; main()" "$@"
           WRAPPER
-          chmod 755 %{{buildroot}}%{{_bindir}}/elementary-l10n
-          install -Dm644 data/se.danielnylander.TranslationStatus.desktop %{{buildroot}}%{{_datadir}}/applications/se.danielnylander.TranslationStatus.desktop
-          install -Dm644 data/icons/elementary-l10n.svg %{{buildroot}}%{{_datadir}}/icons/hicolor/scalable/apps/elementary-l10n.svg
-          install -Dm644 data/icons/se.danielnylander.elementary-l10n.svg %{{buildroot}}%{{_datadir}}/icons/hicolor/scalable/apps/se.danielnylander.elementary-l10n.svg
-          install -Dm644 data/man/elementary-l10n.1 %{{buildroot}}%{{_mandir}}/man1/elementary-l10n.1
-          install -Dm644 data/se.danielnylander.TranslationStatus.metainfo.xml %{{buildroot}}%{{_datadir}}/metainfo/se.danielnylander.TranslationStatus.metainfo.xml
-          if [ -d locale ]; then
-            for mo in locale/*/LC_MESSAGES/*.mo; do
-              [ -f "$mo" ] || continue
-              lang=$(echo "$mo" | cut -d/ -f2)
-              install -Dm644 "$mo" "%{{buildroot}}%{{_datadir}}/locale/$lang/LC_MESSAGES/elementary-l10n.mo"
-            done
-          fi
+          chmod 755 %{buildroot}%{_bindir}/elementary-l10n
+          install -Dm644 data/se.danielnylander.TranslationStatus.desktop %{buildroot}%{_datadir}/applications/se.danielnylander.TranslationStatus.desktop
+          install -Dm644 data/icons/se.danielnylander.elementary-l10n.svg %{buildroot}%{_datadir}/icons/hicolor/scalable/apps/se.danielnylander.elementary-l10n.svg
+          install -Dm644 data/icons/elementary-l10n.svg %{buildroot}%{_datadir}/icons/hicolor/scalable/apps/elementary-l10n.svg
+          install -Dm644 data/man/elementary-l10n.1 %{buildroot}%{_mandir}/man1/elementary-l10n.1
+          install -Dm644 data/se.danielnylander.TranslationStatus.metainfo.xml %{buildroot}%{_datadir}/metainfo/se.danielnylander.TranslationStatus.metainfo.xml
+          test -f po/sv/LC_MESSAGES/elementary-l10n.mo && install -Dm644 po/sv/LC_MESSAGES/elementary-l10n.mo %{buildroot}%{_datadir}/locale/sv/LC_MESSAGES/elementary-l10n.mo || true
 
           %files
           %license COPYING
-          %{{_bindir}}/elementary-l10n
-          %{{_datadir}}/elementary-l10n/
-          %{{_datadir}}/applications/se.danielnylander.TranslationStatus.desktop
-          %{{_datadir}}/icons/hicolor/scalable/apps/elementary-l10n.svg
-          %{{_datadir}}/icons/hicolor/scalable/apps/se.danielnylander.elementary-l10n.svg
-          %{{_mandir}}/man1/elementary-l10n.1*
-          %{{_datadir}}/metainfo/se.danielnylander.TranslationStatus.metainfo.xml
+          %{_bindir}/elementary-l10n
+          %{_datadir}/elementary-l10n/
+          %{_datadir}/applications/se.danielnylander.TranslationStatus.desktop
+          %{_datadir}/icons/hicolor/scalable/apps/se.danielnylander.elementary-l10n.svg
+          %{_datadir}/icons/hicolor/scalable/apps/elementary-l10n.svg
+          %{_mandir}/man1/elementary-l10n.1*
+          %{_datadir}/metainfo/se.danielnylander.TranslationStatus.metainfo.xml
+          %{_datadir}/locale/sv/LC_MESSAGES/elementary-l10n.mo
 
           %changelog
-          * {today} Daniel Nylander <daniel@danielnylander.se> - {version}-1
+          * $(date "+%a %b %d %Y") Daniel Nylander <daniel@danielnylander.se> - VERSION_PLACEHOLDER-1
           - RPM package
-          """)
-          with open(f"{home}/rpmbuild/SPECS/elementary-l10n.spec", "w") as f:
-              f.write(spec)
+          SPEC
+          sed -i "s/VERSION_PLACEHOLDER/${{ steps.version.outputs.version }}/g" ~/rpmbuild/SPECS/elementary-l10n.spec
 
-          subprocess.run(["rpmbuild", "-ba", f"{home}/rpmbuild/SPECS/elementary-l10n.spec"], check=True)
+      - name: Build RPM
+        run: rpmbuild -ba ~/rpmbuild/SPECS/elementary-l10n.spec
 
       - name: Upload RPM to release
         if: github.event_name == 'release'
@@ -115,6 +103,6 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           VERSION=${{ steps.version.outputs.version }}
-          gh release upload "v${VERSION}" \
+          gh release upload "v$VERSION" \
             ~/rpmbuild/RPMS/noarch/elementary-l10n-${VERSION}-1.noarch.rpm \
             --clobber
