@@ -2,7 +2,7 @@
 
 ## Screenshot
 
-![Ubuntu L10n](screenshots/main.png)
+![elementary L10n](screenshots/main.png)
 
 A GTK4/Adwaita application for viewing elementary OS translation progress via Weblate.
 
