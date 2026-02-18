@@ -661,7 +661,7 @@ class MainWindow(Adw.ApplicationWindow):
             issue_url="https://github.com/yeager/elementary-l10n/issues",
             translate_url="https://app.transifex.com/danielnylander/elementary-l10n/",
             comments=_("View translation status for elementary OS apps on Weblate. Track progress across languages and components."),
-            translator_credits="Daniel Nylander <daniel@danielnylander.se>",
+            translator_credits=_("Translate this app: https://www.transifex.com/danielnylander/elementary-l10n/"),
         )
         about.set_debug_info(_get_system_info())
         about.set_debug_info_filename("elementary-l10n-debug.txt")
