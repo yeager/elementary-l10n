@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-02-16 17:14+0100\n"
+"POT-Creation-Date: 2026-02-18 08:25+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -186,6 +186,11 @@ msgstr ""
 msgid ""
 "View translation status for elementary OS apps on Weblate. Track progress "
 "across languages and components."
+msgstr ""
+
+#: src/elementary_l10n/app.py:664
+msgid ""
+"Translate this app: https://www.transifex.com/danielnylander/elementary-l10n/"
 msgstr ""
 
 #: src/elementary_l10n/app.py:673
