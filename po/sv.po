@@ -11,7 +11,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-02-16 17:14+0100\n"
+"POT-Creation-Date: 2026-02-18 08:25+0100\n"
 "PO-Revision-Date: 2026-02-14 09:50+0000\n"
 "Last-Translator: Daniel Nylander <po@danielnylander.se>, 2026\n"
 "Language-Team: Swedish (https://app.transifex.com/danielnylander/teams/304761/sv/)\n"
@@ -201,6 +201,12 @@ msgid ""
 msgstr ""
 "Visa översättningsstatus för elementary OS-appar på Weblate. Följ framstegen"
 " för olika språk och komponenter."
+
+#: src/elementary_l10n/app.py:664
+msgid ""
+"Translate this app: "
+"https://www.transifex.com/danielnylander/elementary-l10n/"
+msgstr ""
 
 #: src/elementary_l10n/app.py:673
 msgid "Help Translate!"
