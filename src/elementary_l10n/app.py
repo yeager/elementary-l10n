@@ -290,7 +290,6 @@ class MainWindow(Adw.ApplicationWindow):
         .card {
             border-radius: 12px;
             padding: 0;
-            overflow: hidden;
         }
         .card:hover {
             opacity: 0.85;
