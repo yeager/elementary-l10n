@@ -207,6 +207,8 @@ msgid ""
 "Translate this app: "
 "https://www.transifex.com/danielnylander/elementary-l10n/"
 msgstr ""
+"Översätt denna app: "
+"https://www.transifex.com/danielnylander/elementary-l10n/"
 
 #: src/elementary_l10n/app.py:673
 msgid "Help Translate!"
