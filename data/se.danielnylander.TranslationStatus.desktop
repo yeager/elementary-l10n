@@ -6,5 +6,6 @@ Exec=elementary-l10n
 Icon=se.danielnylander.TranslationStatus
 Terminal=false
 Type=Application
+StartupWMClass=se.danielnylander.TranslationStatus
 Categories=Development;Translation;
 Keywords=translation;l10n;weblate;localization;

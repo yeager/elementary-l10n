@@ -765,6 +765,7 @@ class MainWindow(Adw.ApplicationWindow):
 class App(Adw.Application):
     def __init__(self):
         super().__init__(application_id="se.danielnylander.TranslationStatus",
+        GLib.set_application_name(_("Translation Status"))
                          flags=Gio.ApplicationFlags.FLAGS_NONE)
         if HAS_NOTIFY:
             _Notify.init("elementary-l10n")
