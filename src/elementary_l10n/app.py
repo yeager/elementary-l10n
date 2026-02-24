@@ -21,6 +21,7 @@ except (ValueError, ImportError):
 from gi.repository import Gtk, Adw, Gio, GLib, Gdk, Pango  # noqa: E402
 
 from . import weblate  # noqa: E402
+from . import __version__  # noqa: E402
 
 # i18n setup
 LOCALEDIR = os.path.join(os.path.dirname(__file__), '..', '..', '..', 'po', 'locale')
@@ -129,7 +130,7 @@ def _send_notification(summary, body="", icon="dialog-information"):
 def _get_system_info():
     return "\n".join([
         f"App: Translation Status",
-        f"Version: {"0.2.1"}",
+        f"Version: {__version__}",
         f"GTK: {Gtk.get_major_version()}.{Gtk.get_minor_version()}.{Gtk.get_micro_version()}",
         f"Adw: {Adw.get_major_version()}.{Adw.get_minor_version()}.{Adw.get_micro_version()}",
         f"Python: {_platform.python_version()}",
@@ -224,13 +225,22 @@ class MainWindow(Adw.ApplicationWindow):
         # Content
         self._stack = Gtk.Stack(transition_type=Gtk.StackTransitionType.CROSSFADE)
 
-        # Loading view
+        # Loading view with progress
         loading_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=12,
                               valign=Gtk.Align.CENTER, halign=Gtk.Align.CENTER)
         spinner = Gtk.Spinner(spinning=True, width_request=48, height_request=48)
         loading_box.append(spinner)
-        loading_box.append(Gtk.Label(label=_("Loading translation data…")))
+        self._loading_label = Gtk.Label(label=_("Loading translation data…"))
+        loading_box.append(self._loading_label)
+        self._progress_bar = Gtk.ProgressBar(width_request=300, show_text=True)
+        self._progress_bar.set_visible(False)
+        loading_box.append(self._progress_bar)
+        self._eta_label = Gtk.Label(label="")
+        self._eta_label.add_css_class("dim-label")
+        self._eta_label.add_css_class("caption")
+        loading_box.append(self._eta_label)
         self._stack.add_named(loading_box, "loading")
+        self._progress_start_time = None
 
         # Error view
         self._error_label = Gtk.Label(wrap=True, halign=Gtk.Align.CENTER,
@@ -306,9 +316,65 @@ class MainWindow(Adw.ApplicationWindow):
             Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
         )
 
+    def _on_progress(self, current, total, component_name):
+        """Called from worker thread with progress updates."""
+        GLib.idle_add(self._update_progress, current, total, component_name)
+
+    def _update_progress(self, current, total, component_name):
+        """Update progress bar, percentage, and ETA on the main thread."""
+        import time as _time
+        if total <= 0:
+            return
+        fraction = current / total
+        pct = fraction * 100
+        self._progress_bar.set_visible(True)
+        self._progress_bar.set_fraction(fraction)
+        self._progress_bar.set_text(f"{current}/{total} ({pct:.0f}%)")
+
+        # Color the progress bar based on completion
+        if pct <= 0:
+            css_class = "error"
+        elif pct < 50:
+            css_class = "warning"
+        elif pct < 100:
+            css_class = "accent"
+        else:
+            css_class = "success"
+        for c in ("error", "warning", "accent", "success"):
+            if c == css_class:
+                self._progress_bar.add_css_class(c)
+            else:
+                self._progress_bar.remove_css_class(c)
+
+        if component_name:
+            self._loading_label.set_text(
+                _("Fetching: {component}").format(component=component_name))
+
+        # ETA calculation
+        if self._progress_start_time is None:
+            self._progress_start_time = _time.time()
+            self._eta_label.set_text("")
+        elif current > 0:
+            elapsed = _time.time() - self._progress_start_time
+            rate = current / elapsed  # items per second
+            remaining = total - current
+            if rate > 0:
+                eta_secs = remaining / rate
+                if eta_secs < 60:
+                    eta_str = _("{sec}s remaining").format(sec=int(eta_secs))
+                else:
+                    eta_str = _("{min}m {sec}s remaining").format(
+                        min=int(eta_secs // 60), sec=int(eta_secs % 60))
+                self._eta_label.set_text(eta_str)
+
     def _load_data(self, force=False):
         self._stack.set_visible_child_name("loading")
         self._summary.set_text("")
+        self._progress_bar.set_fraction(0)
+        self._progress_bar.set_visible(False)
+        self._eta_label.set_text("")
+        self._loading_label.set_text(_("Loading translation data…"))
+        self._progress_start_time = None
 
         def on_data(rows):
             GLib.idle_add(self._populate, rows, False)
@@ -322,6 +388,7 @@ class MainWindow(Adw.ApplicationWindow):
         weblate.fetch_all_data(
             self._current_lang, on_data, on_error,
             cache_cb=None if force else on_cache,
+            progress_cb=self._on_progress,
         )
 
     def _show_error(self, msg):
@@ -525,7 +592,8 @@ class MainWindow(Adw.ApplicationWindow):
             self._theme_btn.set_icon_name("weather-clear-symbolic")
 
     def _update_status_bar(self):
-        self._status_bar.set_text("Last updated: " + _dt_now.now().strftime("%Y-%m-%d %H:%M"))
+        import datetime as _dt
+        self._status_bar.set_text("Last updated: " + _dt.datetime.now().strftime("%Y-%m-%d %H:%M"))
 
     def _on_lang_changed(self, dropdown, _pspec):
         idx = dropdown.get_selected()
@@ -651,7 +719,7 @@ class MainWindow(Adw.ApplicationWindow):
         about = Adw.AboutDialog(
             application_name=_("Translation Status"),
             application_icon="se.danielnylander.TranslationStatus",
-            version="0.2.1",
+            version=__version__,
             developer_name="Daniel Nylander",
             developers=["Daniel Nylander <daniel@danielnylander.se>"],
             copyright="© 2026 Daniel Nylander",

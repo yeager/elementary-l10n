@@ -226,12 +226,13 @@ def component_translate_url(project_slug: str, component_slug: str,
 
 
 def fetch_all_data(language_code: str, callback: Callable, error_cb: Callable,
-                   cache_cb: Callable | None = None):
+                   cache_cb: Callable | None = None, progress_cb: Callable | None = None):
     """Fetch all projects, components and stats in a background thread.
 
     callback(data) on fresh data.
     error_cb(exception) on failure.
     cache_cb(data, age_minutes) if cached data is available (<1h old).
+    progress_cb(current, total, component_name) for progress updates.
     """
     # Check cache first
     cached_data, cached_ts = load_cache(language_code)
@@ -274,21 +275,29 @@ def fetch_all_data(language_code: str, callback: Callable, error_cb: Callable,
             projects = fetch_projects(session)
             rows = []
 
+            # First pass: collect all components to know total count
+            all_tasks = []
             for proj in projects:
                 ps = proj["slug"]
                 time.sleep(REQUEST_DELAY)
                 components = fetch_components(ps, session)
-
                 for comp in components:
-                    cs = comp["slug"]
-                    time.sleep(REQUEST_DELAY)
-                    try:
-                        stats = fetch_statistics(ps, cs, language_code, session)
-                        pct = stats.get("translated_percent", 0.0)
-                    except requests.HTTPError:
-                        pct = 0.0
+                    all_tasks.append((proj, comp))
 
-                    rows.append({
+            total = len(all_tasks)
+            for idx, (proj, comp) in enumerate(all_tasks):
+                ps = proj["slug"]
+                cs = comp["slug"]
+                if progress_cb:
+                    progress_cb(idx, total, comp["name"])
+                time.sleep(REQUEST_DELAY)
+                try:
+                    stats = fetch_statistics(ps, cs, language_code, session)
+                    pct = stats.get("translated_percent", 0.0)
+                except requests.HTTPError:
+                    pct = 0.0
+
+                rows.append({
                         "project": proj["name"],
                         "project_slug": ps,
                         "component": comp["name"],
@@ -298,6 +307,8 @@ def fetch_all_data(language_code: str, callback: Callable, error_cb: Callable,
                         "translate_url": component_translate_url(ps, cs, language_code),
                     })
 
+            if progress_cb:
+                progress_cb(total, total, '')
             save_cache(language_code, rows)
             callback(rows)
         except Exception as e:

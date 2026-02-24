@@ -1,2 +1,2 @@
 """elementary OS translation status viewer."""
-__version__ = "0.3.2"
+__version__ = "0.4.0"
